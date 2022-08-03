@@ -1,0 +1,73 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (0) at (-6, 0) {};
+		\node [style=none] (1) at (7, 0) {};
+		\node [style=none] (2) at (-6, 8) {};
+		\node [style=none] (3) at (-6.5, 5) {d};
+		\node [style=blue node] (4) at (0, 5) {};
+		\node [style=blue node] (5) at (0, 5) {};
+		\node [style=none] (6) at (0.75, 5) {Q};
+		\node [style=none] (7) at (-5.5, 8) {y};
+		\node [style=none] (8) at (-1.25, -0.75) {conductor};
+		\node [style=none] (9) at (7, -0.75) {$V = V_0$};
+		\node [style=none] (10) at (-6.25, 5) {};
+		\node [style=none] (11) at (-5.75, 5) {};
+		\node [style=none] (12) at (-6, -7) {};
+		\node [style=none] (13) at (7, -7) {};
+		\node [style=none] (14) at (-6, -3) {};
+		\node [style=none] (15) at (-7, -4.5) {d};
+		\node [style=none] (19) at (-5.5, -3) {y};
+		\node [style=none] (22) at (-6.25, -4.25) {};
+		\node [style=none] (23) at (-5.75, -4.25) {};
+		\node [style=none] (24) at (-3.5, 0.25) {};
+		\node [style=none] (25) at (-0.25, 0.25) {};
+		\node [style=none] (26) at (2.75, 0.25) {};
+		\node [style=none] (27) at (5.25, 0.25) {};
+		\node [style=none] (28) at (1.25, 0.25) {};
+		\node [style=none] (29) at (-6, -11.25) {};
+		\node [style=blue node] (31) at (0.25, -4) {};
+		\node [style=none] (32) at (-0.5, -3.75) {Q};
+		\node [style=none] (33) at (-3.75, -7) {};
+		\node [style=none] (34) at (-0.5, -7) {};
+		\node [style=none] (35) at (2.5, -7) {};
+		\node [style=none] (36) at (5, -7) {};
+		\node [style=none] (37) at (1, -7) {};
+		\node [style=blue node] (39) at (0.25, -10.5) {};
+		\node [style=none] (40) at (1.25, -10.75) {Q};
+		\node [style=none] (41) at (-3.75, -7) {};
+		\node [style=none] (42) at (-0.5, -7) {};
+		\node [style=none] (43) at (2.5, -7) {};
+		\node [style=none] (44) at (5, -7) {};
+		\node [style=none] (45) at (1, -7) {};
+		\node [style=none] (46) at (7.75, -7.75) {Equal potential plane};
+		\node [style=none] (47) at (9, -9) {};
+		\node [style=none] (48) at (-7, -10.5) {-d};
+		\node [style=none] (49) at (-6.25, -10.25) {};
+		\node [style=none] (50) at (-5.75, -10.25) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw (2.center) to (0.center);
+		\draw (0.center) to (1.center);
+		\draw (11.center) to (10.center);
+		\draw (14.center) to (12.center);
+		\draw (12.center) to (13.center);
+		\draw (23.center) to (22.center);
+		\draw [style=blue pointer, bend right, looseness=0.75] (5) to (24.center);
+		\draw [style=blue pointer, bend right=15, looseness=0.50] (5) to (25.center);
+		\draw [style=blue pointer, bend left=15] (5) to (28.center);
+		\draw [style=blue pointer, bend left, looseness=0.75] (5) to (26.center);
+		\draw [style=blue pointer, bend left=45, looseness=0.75] (5) to (27.center);
+		\draw (12.center) to (29.center);
+		\draw [style=blue pointer, bend right, looseness=0.75] (31) to (33.center);
+		\draw [style=blue pointer, bend right=15, looseness=0.50] (31) to (34.center);
+		\draw [style=blue pointer, bend left=15] (31) to (37.center);
+		\draw [style=blue pointer, bend left, looseness=0.75] (31) to (35.center);
+		\draw [style=blue pointer, bend left=45, looseness=0.75] (31) to (36.center);
+		\draw [style=blue pointer, bend left=15] (39) to (41.center);
+		\draw [style=blue pointer, bend left=15, looseness=0.75] (39) to (42.center);
+		\draw [style=blue pointer, bend right=45, looseness=0.50] (39) to (45.center);
+		\draw [style=blue pointer, bend right, looseness=0.50] (39) to (43.center);
+		\draw [style=blue pointer, bend right, looseness=0.50] (39) to (44.center);
+		\draw (50.center) to (49.center);
+	\end{pgfonlayer}
+\end{tikzpicture}

@@ -1,0 +1,18 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (0) at (-8, 0) {};
+		\node [style=none] (1) at (8, 0) {};
+		\node [style=none] (2) at (-8, 8) {};
+		\node [style=none] (3) at (1.25, 6) {};
+		\node [style=none] (4) at (-3, 4) {mean};
+		\node [style=none] (5) at (2, 6.25) {mode};
+		\node [style=none] (6) at (-0.75, 5.25) {};
+		\node [style=none] (7) at (-0.75, 5.25) {median};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw (0.center) to (1.center);
+		\draw (2.center) to (0.center);
+		\draw [in=-165, out=45, looseness=0.75] (0.center) to (3.center);
+		\draw [in=135, out=15, looseness=0.75] (3.center) to (1.center);
+	\end{pgfonlayer}
+\end{tikzpicture}
