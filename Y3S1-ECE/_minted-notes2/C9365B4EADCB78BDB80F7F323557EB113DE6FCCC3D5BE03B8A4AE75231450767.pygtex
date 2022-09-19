@@ -1,0 +1,9 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nf}{movia}\PYG{+w}{ }\PYG{n+no}{r11}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x200004}
+\PYG{n+nf}{ldw}\PYG{+w}{   }\PYG{n+no}{r9}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x0}\PYG{p}{(}\PYG{n+no}{r11}\PYG{p}{)}
+\PYG{n+nf}{movia}\PYG{+w}{ }\PYG{n+no}{r11}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x200008}
+\PYG{n+nf}{ldw}\PYG{+w}{   }\PYG{n+no}{r10}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x0}\PYG{p}{(}\PYG{n+no}{r11}\PYG{p}{)}
+\PYG{n+nf}{add}\PYG{+w}{   }\PYG{n+no}{r8}\PYG{p}{,}\PYG{+w}{ }\PYG{n+no}{r9}\PYG{p}{,}\PYG{+w}{ }\PYG{n+no}{r10}
+\PYG{n+nf}{movia}\PYG{+w}{ }\PYG{n+no}{r11}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x200000}
+\PYG{n+nf}{stw}\PYG{+w}{   }\PYG{n+no}{r8}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x0}\PYG{p}{(}\PYG{n+no}{r11}\PYG{p}{)}
+\end{Verbatim}

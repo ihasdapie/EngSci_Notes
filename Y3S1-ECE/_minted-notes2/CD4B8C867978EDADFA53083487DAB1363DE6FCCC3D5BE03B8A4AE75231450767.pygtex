@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nf}{movi}\PYG{+w}{ }\PYG{n+no}{rX}\PYG{p}{,}\PYG{+w}{ }\PYG{n+no}{Imm16}
+\PYG{+w}{	}\PYG{c+c1}{; sets rX to the sign\PYGZhy{}extended (signed) 16 bit immediate}
+\PYG{n+nf}{movui}\PYG{+w}{ }\PYG{n+no}{rX}\PYG{p}{,}\PYG{+w}{ }\PYG{n+no}{Imm16}
+\PYG{+w}{	}\PYG{c+c1}{; sets rX to a zero\PYGZhy{}extended unsigned 16 bit immediate}
+\PYG{n+nf}{movia}\PYG{+w}{ }\PYG{n+no}{rX}\PYG{p}{,}\PYG{+w}{ }\PYG{n+no}{Imm32}
+\PYG{+w}{	}\PYG{c+c1}{; sets rX to a 32 bit immediate}
+\end{Verbatim}

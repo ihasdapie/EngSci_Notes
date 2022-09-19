@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nf}{movhi}\PYG{+w}{ }\PYG{n+no}{r11}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x0020}
+\PYG{n+nf}{ori}\PYG{+w}{   }\PYG{n+no}{r11}\PYG{p}{,}\PYG{+w}{ }\PYG{n+no}{r11}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x0004}
+\PYG{n+nf}{ldw}\PYG{+w}{   }\PYG{n+no}{r9}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x0}\PYG{p}{(}\PYG{n+no}{r11}\PYG{p}{)}
+\PYG{c+c1}{;; can be replaced with}
+\PYG{n+nf}{movhi}\PYG{+w}{ }\PYG{n+no}{r11}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x0020}
+\PYG{n+nf}{ldw}\PYG{+w}{ }\PYG{n+no}{r9}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x4}\PYG{p}{(}\PYG{n+no}{r11}\PYG{p}{)}
+\end{Verbatim}

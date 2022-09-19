@@ -1,0 +1,13 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{+w}{	}\PYG{n+na}{.data}
+\PYG{+w}{	}\PYG{n+na}{.align}\PYG{+w}{ }\PYG{l+m+mi}{4}\PYG{+w}{ }\PYG{c+c1}{;; Align to word size addresses which are faster to access}
+\PYG{n+nl}{a:}\PYG{+w}{ }\PYG{n+na}{.word}\PYG{+w}{ }\PYG{l+m+mi}{0}
+\PYG{n+nl}{b:}\PYG{+w}{ }\PYG{n+na}{.word}\PYG{+w}{ }\PYG{l+m+mi}{0x11223344}
+\PYG{n+nl}{c:}\PYG{+w}{ }\PYG{n+na}{.word}\PYG{+w}{ }\PYG{l+m+mi}{0x55667788}
+\PYG{+w}{	}\PYG{n+na}{.text}
+\PYG{+w}{	}\PYG{n+nf}{movia}\PYG{+w}{ }\PYG{n+no}{r11}\PYG{p}{,}\PYG{+w}{ }\PYG{n+no}{a}\PYG{+w}{  }\PYG{c+c1}{;; moves the address of a into r11}
+\PYG{+w}{	}\PYG{n+nf}{ldw}\PYG{+w}{ }\PYG{n+no}{r9}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{4}\PYG{p}{(}\PYG{n+no}{r11}\PYG{p}{)}\PYG{+w}{ }\PYG{c+c1}{;; loads the value at address a+4 into r9}
+\PYG{+w}{	}\PYG{n+nf}{ldw}\PYG{+w}{ }\PYG{n+no}{r10}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{8}\PYG{p}{(}\PYG{n+no}{r11}\PYG{p}{)}
+\PYG{+w}{	}\PYG{n+nf}{add}\PYG{+w}{ }\PYG{n+no}{r8}\PYG{p}{,}\PYG{+w}{ }\PYG{n+no}{r9}\PYG{p}{,}\PYG{+w}{ }\PYG{n+no}{r10}
+\PYG{+w}{	}\PYG{n+nf}{stw}\PYG{+w}{ }\PYG{n+no}{r8}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{(}\PYG{n+no}{r11}\PYG{p}{)}
+\end{Verbatim}

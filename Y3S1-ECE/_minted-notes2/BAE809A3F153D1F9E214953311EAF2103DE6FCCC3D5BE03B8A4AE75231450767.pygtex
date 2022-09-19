@@ -1,0 +1,18 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nf}{addi}\PYG{+w}{ }\PYG{n+no}{r9}\PYG{p}{,}\PYG{+w}{ }\PYG{n+no}{r0}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x1}
+\PYG{+w}{	}\PYG{c+c1}{; 1. read r0}
+\PYG{+w}{	}\PYG{c+c1}{; 2. Add value read in step 1 with 0x1}
+\PYG{+w}{	}\PYG{c+c1}{; 3. Write result of step 2 to r9}
+\PYG{+w}{	}\PYG{c+c1}{; 4. increment PC to next instruction}
+\PYG{n+nf}{addi}\PYG{+w}{ }\PYG{n+no}{r10}\PYG{p}{,}\PYG{+w}{ }\PYG{n+no}{r0}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x2}
+\PYG{+w}{	}\PYG{c+c1}{; 1. read r0}
+\PYG{+w}{	}\PYG{c+c1}{; 2. Add value read in step 1 with 0x2}
+\PYG{+w}{	}\PYG{c+c1}{; 3. Write result of step 2 to r10}
+\PYG{+w}{	}\PYG{c+c1}{; 4. increment PC to next instruction}
+\PYG{n+nf}{add}\PYG{+w}{ }\PYG{n+no}{r9}\PYG{p}{,}\PYG{+w}{ }\PYG{n+no}{r10}\PYG{p}{,}\PYG{+w}{ }\PYG{n+no}{r11}
+\PYG{+w}{	}\PYG{c+c1}{; 1. read r10}
+\PYG{+w}{	}\PYG{c+c1}{; 2. read r11}
+\PYG{+w}{	}\PYG{c+c1}{; 3. Add values read in steps 1 and 2}
+\PYG{+w}{	}\PYG{c+c1}{; 4. Write result of step 3 to r8}
+\PYG{+w}{	}\PYG{c+c1}{; 5. increment PC to next instruction}
+\end{Verbatim}

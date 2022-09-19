@@ -1,0 +1,10 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nf}{ldw}\PYG{+w}{ }\PYG{n+no}{rX}\PYG{p}{,}\PYG{+w}{ }\PYG{n+no}{Imm16}\PYG{p}{(}\PYG{n+no}{rY}\PYG{p}{)}\PYG{+w}{ }\PYG{c+c1}{;; \PYGZsq{}load word\PYGZsq{} from memory}
+\PYG{c+c1}{;; rX, rY registers, Imm16 is a 16 bit immediate}
+\PYG{c+c1}{;; TLDR; Rx = mem[rY + sign\PYGZhy{}extended(Imm16)]}
+\PYG{c+c1}{; 1. read rY}
+\PYG{c+c1}{; 2. sign\PYGZhy{}extend Imm16 to 32bits}
+\PYG{c+c1}{; 3. adds the result of step 1 and 2}
+\PYG{c+c1}{; 4. reads from memory a word (32 bit) using the result of step 3 as the address}
+\PYG{c+c1}{; 5. write the result of step 4 to rX}
+\end{Verbatim}

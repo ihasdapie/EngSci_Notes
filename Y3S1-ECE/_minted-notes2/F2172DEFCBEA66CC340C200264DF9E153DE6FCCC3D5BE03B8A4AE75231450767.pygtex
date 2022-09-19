@@ -1,0 +1,7 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nf}{movhi}\PYG{+w}{ }\PYG{n+no}{r11}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x0020}
+\PYG{n+nf}{ldw}\PYG{+w}{ }\PYG{n+no}{r9}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x8000}\PYG{p}{(}\PYG{n+no}{r11}\PYG{p}{)}
+\PYG{c+c1}{;; this is incorrect because}
+\PYG{c+c1}{;; will extend to 0xFFFF8000, which would result}
+\PYG{c+c1}{;; in a final address of 0x001F800}
+\end{Verbatim}
