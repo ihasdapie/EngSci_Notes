@@ -1,0 +1,1299 @@
+
+\documentclass[../notes.tex]{subfiles}
+\graphicspath{{\subfix{../img/}}}
+\begin{document}
+
+\part{MAT389: Complex Analysis}
+
+\marginnote{Taught by Prof. Sigil}
+\section{Complex Numbers}
+\subsection{Lecture 1}
+
+Consider a 2-vector $ \vec{x} = (x, y) \in \mathcal{R} $. 
+As complex numbers correspond to two-vectors 
+
+\begin{equation}
+	\vec{x} = (x, y) \leftrightarrow z = x + iy, i^2 = -1
+\end{equation}
+
+$ z $ is, therefore, a complex variable. What are the benefits of a complex number like $ z $?
+
+
+\marginnote{This prof lectures at the speed of sound and talks \textit{into} the board. Couldn't quite follow during this lecture, hopefully I get better about it in the following ones.}
+\begin{definition}
+
+	\textbf{Imaginary and Complex Numbers} 
+
+	$ i $ is an imaginary number such that
+	\begin{equation}
+		i^2 = -1
+		\label{eq:389:i}
+	\end{equation}
+
+	A complex number has the form:
+	\begin{equation}
+		z = x + iy
+		\label{eq:389:complex}
+	\end{equation}
+\end{definition}
+
+\begin{definition}
+
+	There are a number of operations we can perform on complex numbers.
+
+	\textbf{Addition} 
+
+	\begin{equation}
+		z + z^\prime = (x + x^\prime) + i(y + y^\prime)
+		\label{eq:389:complex_add}
+	\end{equation}
+
+
+	\textbf{Multiplication} 
+	\begin{equation}
+		z z^\prime = (x + iy)(x^\prime + iy^\prime) = (x x^\prime - y y^\prime) + i(x y^\prime + x^\prime y)
+		\label{eq:389:complex_mult}
+	\end{equation}
+
+
+	\begin{proof}
+		Proof of \eqref{eq:389:complex_mult}:
+
+		\begin{equation}
+			\begin{split}
+				zz^\prime &= (x+iy)(x^\prime + iy^\prime) \\
+				 &= x + ixy^\prime + i yx^\prime + i^2yy^\prime\\
+				 &= x x^\prime  - yy^\prime + i(xy^\prime + y x ^\prime) \\
+			\end{split}
+		\end{equation}
+	\end{proof}
+
+
+	\textbf{Magnitude} 
+
+	\begin{equation}
+		|z| = \sqrt{x^2 + y^2}
+		\label{eq:389:complex_mag}
+	\end{equation}
+
+	\textbf{Conjugate}
+
+	The complex conjugate has the properties:
+
+	\begin{itemize}
+		\item $ \overline{z} z = |z|^2 $ 
+		\item $ \overline{(z + z^\prime)} = \overline{z} + \overline{z}^\prime$ 
+		\item $ \overline{z \cdot z^\prime} = \overline{z} \cdot \overline{z}^\prime $ 
+	\end{itemize}
+
+
+	We can define a new operation
+
+	\begin{equation}
+		\forall \text{complex} z, \exists \quad \text{complementary number } w \text{ such that } zw = wz = 1
+	\end{equation}
+
+	Denote 
+
+	\begin{equation}
+		w = \frac{1}{z} = z^{-1}
+		\label{eq:389:complex_inv}
+	\end{equation}
+
+	\begin{proof}
+		Proof of \eqref{eq:389:complex_inv}:
+		Find $ w $ s.t. $ zw = 1 $ 
+
+		\begin{equation}
+			\begin{split}
+				zw &=1  \\
+				 w \overline{z} z&= \overline{z}z = |z|^2 > 0  \\
+				 |z|^2 w &= \overline{z}  \\
+				 w &= \frac{\overline{z}}{|z|^2} \rightarrow Z^{-1} = \frac{\overline{z}}{|z|^2}\\
+			\end{split}
+		\end{equation}
+		
+	\end{proof}
+
+\end{definition}
+
+Furthermore, there are operators that we can define on complex numbers.
+
+\begin{definition}
+	\textbf{Real and Imaginary Operators}
+
+	Given $ z = x + iy $, we can define the real and imaginary operators
+	\begin{equation}
+		x = Re \left\{ z \right\}
+	\end{equation}
+
+	\begin{equation}
+		y = Im \left\{ z \right\}
+	\end{equation}
+
+	\begin{example}
+		\begin{equation}
+			Im \left\{ (1 = \sqrt{2} i)^-1 \right\} 
+		\end{equation}
+
+		By \eqref{eq:389:complex_inv}, we have  
+
+
+		\begin{equation}
+			Im \left\{ z^{-1} \right\} = \frac{-Im \left\{ z \right\} }{|z|^2} 
+			\label{eq:389:complex_inv_im}
+		\end{equation}
+
+		And
+
+		\begin{equation}
+			Re \left\{ z^{-1} \right\} = \frac{-Re \left\{ z \right\} }{|z|^2} 
+			\label{eq:389:complex_inv_re}
+		\end{equation}
+
+		Using these, for example, we find that the $ Im = \frac{-\sqrt{2} }{3} $
+
+		We can get the real component in a similar way.
+		
+	\end{example}
+
+\end{definition}
+
+
+Here is an enumeration of absolute value properties for complex numbers:
+
+\begin{equation}
+	| z \cdot  w| = |z| |w|
+\end{equation}
+
+\begin{equation}
+	|z + w| \le  |z| + |w|
+\end{equation}
+
+\begin{equation}
+	|\overline{z}| = |z|
+\end{equation}
+
+\begin{equation}
+	|z + w|^2 = (\overline{x} + \overline{w}) (z + w) = |z|^2 + |w|^2 + \overline{z}w + \overline{w}z
+	\label{eq:389:z_plus_w_abs_squared}
+\end{equation}
+
+\begin{proof}
+
+Note that $ \overline{z}w + \overline{w}z = 2 Re \left\{ z \overline{w} \right\}  $, by \eqref{eq:389:z_plus_w_abs_squared}
+
+And so 
+
+\begin{equation}
+	|z + w|^2 \le  |z|^2 + |w|^2 + 2 |z| |w| = (|z| + |w|)^2
+\end{equation}
+	
+\end{proof}
+
+\subsection{Lecture 2}
+
+Whereas a two-vector $ \vec{x} \in \mathbb{Z} $, complex numbers exist in the complex plane, $ z \in \mathbb{C} $ 
+
+
+
+\begin{theorem}
+	\textbf{Polar Decomposition} 
+
+	Complex numbers can be expressed in polar form as well
+	\begin{equation}
+		z = r(\cos \theta + i \sin \theta)
+		\label{eq:389:complex_polar}
+	\end{equation}
+
+	Where
+	\begin{equation}
+		r = |z| \qquad x = r\cos \theta \qquad y = r\sin \theta \qquad \theta = \tan^{-1} \left(  \frac{y}{x} \right)
+	\end{equation}
+\end{theorem}
+
+
+This has a number of useful properties
+
+
+\begin{equation}
+	z \cdot  z^\prime = |z| |z^\prime| (\cos(\theta + \theta^\prime) + i \sin(\theta + \theta^\prime))
+	\label{eq:389:complex_mult_2}
+\end{equation}
+
+\begin{equation}
+	\frac{z}{z^\prime} = \frac{|z|}{|z^\prime|} (\cos(\theta - \theta^\prime) + i \sin(\theta - \theta^\prime))
+	\label{eq:389:complex_div_2}
+\end{equation}
+
+
+\begin{proof}
+	Proof for \eqref{eq:389:complex_mult_2}:
+
+	\begin{equation}
+		\begin{split}
+			z \cdot  z^\prime &= |z|(\cos(\theta + i \sin \theta)) \times |z^\prime| (\cos \theta^\prime + i \sin \theta ^\prime) \\
+			 &= |z| |z^\prime| (\cos\theta \cos\theta^\prime + i \cos\theta \sin\theta^\prime + i \sin \theta \cos \theta^\prime - \sin\theta \sin\theta^\prime ) \\ 
+			 &= |z| |z^\prime| \left[ \cos\theta \cos \theta^\prime - \sin \theta \sin \theta^\prime   + i (\cos\theta \sin\theta^\prime + \sin\theta \cos\theta^\prime)\right]  \\
+		\end{split}
+	\end{equation}
+	And the proof follows
+\end{proof}
+
+
+\begin{lemma}
+	A corollary exists
+
+	\begin{equation}
+		z^2 = |z|^2 (\cos2\theta + i \sin 2 \theta)
+	\end{equation}
+	
+\end{lemma}
+
+\begin{theorem}
+	\textbf{Moivre's Theorem} 
+
+
+	\begin{equation}
+		z^n = |z|^n (\cos(n\theta) + i \sin(n\theta))
+		\label{eq:389:moivre}
+	\end{equation}
+
+	More generally, 
+	\begin{equation}
+		(\cos \theta + i \sin \theta)^n = \cos(n\theta) + i \sin(n\theta)
+		\label{eq:389:moivre_thm}
+	\end{equation}
+
+	So we may define $ z $ to be the $ n^{th} $ root of $ w $ which implies that 
+
+	\begin{lemma}
+		Every complex number has a $ n^{th} $ root $ \forall n $ 
+	\end{lemma}
+
+	\begin{proof}
+
+		\marginnote{
+			Intuition: define $ z $ to be $ \frac{1}{n} $ and then take the $ n^{th} $ power of both sides to show that $ z^n = w $ 
+		}
+		\begin{equation}
+			\text{Let } z = |w|^{\frac{1}{n}}(\cos \frac{\theta}{n} + i \sin \frac{\theta}{n})
+		\end{equation}
+
+		Then
+
+		\begin{equation}
+			w = |w| (\cos \theta + i \sin \theta), \text{ then  } z^n = w
+		\end{equation}
+		
+	\end{proof}
+	
+\end{theorem}
+
+This leads us to the conclusion that representations of complex numbers are not unique\sn{They are part of a cyclic group}.
+\begin{proof}
+	If every $ z $ can be written as $ z = r(\cos\theta + i \sin \theta)$, then it holds for $ \theta + 2\pi n \forall n \in \mathbb{Z} $ since $ \sin\theta = \sin(\theta + 2\pi n) $  and  $  \cos\theta = \cos(\theta + 2\pi n)  $.
+\end{proof}
+
+\subsubsection{Functions on complex planes}
+
+
+\begin{definition}
+	Given a domain $ \mathbb{D} \in \mathbb{C} $, a function $ f $  is a rule such that
+
+	\begin{equation}
+		z \in \mathbb{D} \xrightarrow{f} w \in \mathbb{D} \leftrightarrow w = f(z)
+	\end{equation}
+\end{definition}
+
+
+\begin{definition}
+		We may define $ \mathbb{D} $ to be the domain of $ f $ 
+
+
+		Likewise, range is defined as
+			\begin{equation}
+				Ran\{f\} = \{ w \in \mathbb{C} : \exists z \in D : f(z) = w \}
+			\end{equation}
+			
+\end{definition}
+
+\begin{example}
+	\begin{equation}
+		f(z) = \frac{1}{z+i}
+	\end{equation}
+
+	What is the maximum domain of $ f $?
+
+	\begin{equation}
+		Dom\{f\} = \{ z \in \mathbb{C} : |z| < -i \}
+	\end{equation}
+
+	What is the range of $ f $?
+	\begin{equation}
+		\frac{1}{z+i} = w
+	\end{equation}
+
+	For which values of $ w $ can we solve this equation?
+
+	\begin{equation}
+		z = -i + \frac{1}{w}
+	\end{equation}
+
+	So the range of the function is 
+	\begin{equation}
+		Ran\{f\} = \{ w \in \mathbb{C} : |w| \neq 0 \}
+	\end{equation}
+	
+	
+\end{example}
+
+
+\begin{example}
+	\begin{equation}
+		f(z) = z^2 + 1
+	\end{equation}
+
+	It is fairly clear that $ Dom\{f\} = {f \in \mathbb{C}} $ 
+
+	The range can be found by solving for $ z $ in
+
+	\begin{equation}
+		z^2 + 1 = w
+	\end{equation}
+
+	And so 
+
+
+	\begin{equation}
+		Ran\{f\} = \{ w \in \mathbb{C}\}
+	\end{equation}
+	
+	
+	
+	
+\end{example}
+
+
+\subsubsection{Exponential Functions}
+
+\begin{definition}
+
+	Given $ z = x + iy $,
+
+	\begin{equation}
+		e^z = e^x (\cos y + i \sin y) = e ^{Re\{z\}}(cos(Im\{z\}) + i \sin(Im\{z\}))
+	\end{equation}
+
+	\begin{enumerate}
+		\item $ e^{z+w} = e^z e^w $ 
+		\item $ |e^{z} | = e^{Re\{z\}} \neq 0  $ 
+		\item $e^{z + i 2\pi n } = e^{z} $
+	\end{enumerate}
+	
+	\begin{proof}
+		(1) follows from the product rule for complex numbers
+	\item (2) follows by definition
+	\item (3) follows by definition (recall: writing $ z $ w.r.t. sin, cos)
+	\end{proof}
+\end{definition}
+
+	More properties:
+
+	\marginnote{$ \arg$, or argument is the angle from the real axis to that on the complex plane. Usually denoted by $ \theta $  }
+
+	\begin{itemize}
+		\item $ Dom\{e^z\} = \mathbb{C} $
+		\item $ Ran\{e^z\} = \{\mathbb{C} \setminus \{0\}\}$  
+		\item $  e^z = w \qquad \text{if } w \neq  0$ 
+	\end{itemize}
+			\sidenote{Note: ` $ \setminus $ '  denotes set exclusion } 
+
+	\begin{equation}
+		\begin{split}
+			z &= ln|w| + i \arg w \\
+			e^z &=  e^{ln|w| + i \arg w} \\
+					&= e^{ln|w|} e^{i \arg w} \\
+					&=  |w| \cos(\arg w) + i \sin(\arg w) \\
+					&= w \\ 
+		\end{split}
+	\end{equation}
+
+	\begin{remark}
+		\textbf{Polar representation} 
+
+		\begin{equation}
+			w = |w| e^{i \arg w}
+		\end{equation}
+
+		\marginnote{ \begin{equation} r = |w| \quad \theta = \arg w \end{equation}}
+
+		\begin{example}
+			\textbf{Find polar coordinates of}  $ z = i+1 $ 
+
+			\begin{equation}
+				\begin{split}
+					|z| &= \sqrt{1+i} = \sqrt{2}    \\
+					\cos \theta &= \frac{1}{\sqrt{2} } \rightarrow \theta = \frac{\pi}{4} \\
+					z &= \sqrt{2} e^{i\pi/4}  \\
+				\end{split}
+			\end{equation}
+			
+
+
+		\end{example}
+		
+
+		\begin{example}
+			Find \begin{equation}
+				(1+i)^{\frac{1}{3}}
+			\end{equation}
+
+			Solution:
+			$ z = \sqrt{2} e^{\frac{i\pi}{4}} \rightarrow z^{1/3} = 2^{\frac{1}{6}} e^{i\pi/12} $ 
+			
+		\end{example}
+		
+	\end{remark}
+
+
+\begin{definition}
+	\textbf{Trig functions for complex numbers} 
+
+	\begin{equation}
+		\cos z = \frac{1}{2} \left( e^{iz} + e^{-iz} \right)
+	\end{equation}
+
+	\begin{proof}
+	\begin{equation}
+		\cos x = \frac{1}{2} (e^{ix} + e^{-ix}) = \frac{1}{2} 
+		\left( \cos x 
+		+ i \sin x 
+		+ \underbrace{\cos(-x)}_{\text{odd; } = \cos(x)}
+		+ \underbrace{i \sin(-x)}_{\text{even; } = -\sin(x)} \right)
+		= \cos x
+	\end{equation}
+	\end{proof}
+	
+
+	\begin{equation}
+		\sin z = \frac{1}{2} \left( e^{iz} - e^{-iz} \right)
+	\end{equation}
+
+	And a similar proof follows for $\sin z$.
+
+	These have the following properties
+
+
+	\begin{equation}
+		\sin z |_{Im Z = 0} = \sin x
+	\end{equation}
+
+	\begin{equation}
+		\cos(z + 2 \pi n) = \cos z \forall n \in \mathbb{Z}
+	\end{equation}
+
+	\begin{equation}
+		\sin(z + 2 \pi n) = \sin z \forall n \in \mathbb{Z}
+	\end{equation}
+\end{definition}
+
+\begin{proof}
+	\begin{equation}
+		\begin{split}
+			\cos z + 2\pi n &= \frac{1}{2}(e^{i(z+2\pi n)} + e^{-i(z+2\pi n)}) \\
+											&= \frac{1}{2}(e^{iz}e^{i2\pi n} + e^{-iz}e^{-i2\pi n}) \\
+											&= \frac{1}{2}(e^{iz} + e^{-iz}) \\
+											&= \cos z \\
+		\end{split}
+	\end{equation}
+
+\end{proof}
+
+The domain of $ \{ \cos z, \sin z\} = \mathbb{C} $ 
+
+Range?
+
+Solve $ \cos z = w $  for $ z $ 
+
+\begin{equation}
+	\begin{split}
+		\frac{1}{2} (e^{iz} + e^{-iz}) &= w \\
+		\ldots \times   2e^{iz} \text{ on both sides}\\
+		e^{2iz} - 2we^{iz} + 1 &= 0  \\
+		\ldots & \text{Let } S = e^{iz} \\
+		S^2 - 2ws + 1 &= 0 \\
+		S &= w \pm \sqrt{w^2 - 1} \equiv u  \\
+	\end{split}
+\end{equation}
+
+Now we note that $ e^{iz} = u $  can be solved for $ z $  for any $ u \neq  0$ 
+
+\begin{equation}
+	u = 0 \leftrightarrow w = \pm \sqrt{w^2 - 1} 
+\end{equation}
+
+\begin{equation}
+	w^2 = w^2 - 1 \text{ impossible for } u \neq 0 
+\end{equation}
+
+Therefore:
+
+\begin{equation}
+	Ran\{\cos z\}=
+	Ran\{\sin z\} = \mathbb{C}
+\end{equation}
+
+\begin{remark}
+	An intuitive way of interpreting this result is thinking of $ \{\sin, \cos \} $ being a function that projects values from the complex domain to the real plane; though $ \{\sin, \cos \} $ takes on a limited range of values in the real domain, in the complex domain it spans the entire plane. Think: mental model of a complex number spinning around and having that project onto a real line. More formally, see: the \href{https://en.wikipedia.org/wiki/Picard_theorem}{Little Picard Theorem}
+\end{remark}
+
+
+\subsection{Lecture 3: Exponent and Logarithm}
+
+\subsubsection{Exponential}
+Recall: the complex exponential function $ \exp $ is defined as
+
+\begin{equation}
+	\exp: e^z = e^x(\cos y + i \sin y)
+\end{equation}
+
+Where $ z = x + iy$.
+
+Properties:
+
+\begin{enumerate}
+	\item $ e^{w+z} = e^z e^w $ 
+	\item $ e^z \neq  0$ 
+	\item $ e^{2\pi m i} = 1 $ 
+\end{enumerate}
+
+The first and third properties imply that the exponential function is a periodic function.
+
+\begin{equation}
+e^{z + 2 \pi m i } = e^{ z }
+\end{equation}
+
+Consider the equation
+\begin{equation}
+	e^z = w 
+\end{equation}
+
+If this has the solution $ z_* $, then $ z_* + 2\pi m i, m = 0, \pm 1, \pm 2, \ldots$  is also a solution.
+
+
+
+
+\subsubsection{Logarithm}
+
+\begin{definition}
+\begin{equation}
+	\log \equiv \log w = \ln |w| + i \arg w
+\end{equation}
+	
+\end{definition}
+
+
+\marginnote{$ w \neq  0 $ }
+
+
+\begin{proof}
+Proof that $ \log w = \ln |w| + i \arg w$ 
+	\begin{equation}
+		\begin{split}
+			w =  &= |w| e^{i \arg w} \\
+			 &= e^{\ln|w|} e^{i \arg w}  \\
+			 &=  e^{\ln|w| + i \arg w} \\
+			 \rightarrow e^z &= e^{\ln|w| + i \arg w} \\
+			 \Rightarrow z &= \ln|w| + i \arg w  \\
+		\end{split}
+	\end{equation}
+\end{proof}
+
+
+Note that $ \arg $ is a multivalued function, i.e
+
+\begin{equation}
+	\arg w = \arg (w + 2 \pi m_i), i \in \mathbb{Z}, \arg w \in [-\pi, \pi)
+\end{equation}
+	
+
+\begin{example}
+	\begin{equation}
+		e^z = e^5
+	\end{equation}
+	Solve for $ z $ 
+
+	\begin{equation}
+		z = 5 + 2 \pi m i, m \in \mathbb{Z}
+	\end{equation}
+\end{example}
+
+\begin{example}
+	Solve $ e^z = i $ 
+
+	\begin{equation}
+		i = e^{\frac{i\pi}{2}}
+	\end{equation}
+
+	\marginnote{
+		\begin{equation}
+			|i| = 1; \arg i = \frac{\pi}{2}
+	\end{equation}}
+	
+
+	The solution is therefore 
+	\begin{equation}
+		z = i(\pi/2 + 2\pi m), m \in \mathbb{Z}
+	\end{equation}
+
+	Note that providing only a single solution is wrong; must provide all
+\end{example}
+
+
+The complex logarithm is a multivalued function (like $ \arg $ ).
+
+
+\begin{equation}
+	\log z = \ln |z| + i \arg z, \arg z \in [-\pi, \pi)
+\end{equation}
+
+Note that $ i \arg z $ demotes the principal branch of $ \log $.
+
+
+Though it is multivalued, in general, $ \log zw \neq  \log z + \log w $ 
+
+\begin{example}
+	Assume $ \arg z = \frac{2\pi}{3}$ and $ \arg w = \frac{3\pi}{4}$. 
+
+	\begin{equation}
+		\arg (z w) = ?
+	\end{equation}
+
+	Typically we would just add them together, i.e. $ \frac{2\pi}{3} + \frac{3\pi}{4} $.
+	But this is $ > \pi $ which is not allowed as per the definition of $ \arg $, so we must add or subtract something.
+
+	Let's try subtracting $ 2\pi $ \mn{since adding $ \pm 2\pi $ doesn't change the angle, just rotates it around once  }
+
+	\begin{equation}
+		\arg (zw) = \frac{17\pi}{12} - 2\pi  =  -\frac{7\pi}{12} \in [-\pi, \pi) 
+	\end{equation}
+
+	So we proved that in general the arguments don't sum up. But we want to go from here to proving that the logs don't sum up.
+
+
+	\begin{equation}
+		\begin{split}
+			\log zw &= \ln |zw| + i \arg zw  \\
+			 &\neq  \ln |z| + \ln |w| + i \arg z + i \arg w \\
+		\end{split}
+	\end{equation}
+
+	In general this is not correct because after breaking apart $ \arg zw $ $ \arg z $ and $ \arg w $ when summed can exceed the range allowable for $ \arg $ 
+
+	\begin{equation}
+		\therefore \log(zw) = \log z + \log w
+	\end{equation}
+\end{example}
+
+\begin{example}
+	Compute $ \log(\sqrt{3} + i ) $.
+
+	Just apply the formula.
+
+	\begin{equation}
+		\log w = \ln |w| + i \arg w
+	\end{equation}
+
+	\begin{equation}
+		 \log(\sqrt{3} + i )  = \ln \sqrt{4}  + i \arg (\sqrt{3} + i) = \ln 2 + i(\frac{\pi}{6} + 2\pi m), m \in \mathbb{Z} 
+	\end{equation}
+	
+\end{example}
+
+
+
+\subsubsection{Powers}
+
+
+\begin{definition}
+	\begin{equation}
+		\forall a \neq  0, a^z \equiv e^{z \log a}
+	\end{equation}
+\end{definition}
+
+\begin{example}
+	Complete $ (1+i)^i $ 
+
+
+	\begin{equation}
+		\begin{split}
+			(1+i)^i &= e^{i \log (1+i)}  \\
+			 \log(1+i) &= \ln\sqrt{2} + i (\frac{\pi}{4} + 2 \pi m), m \in \mathbb{Z}   \\
+		 \ldots &= e^{-\frac{\pi}{4} - 2\pi m} e^{i \ln \sqrt{2} }
+		\end{split}
+	\end{equation}
+	
+
+
+
+\end{example}
+
+
+
+
+
+
+\subsection{Lecture 4}
+
+\begin{definition}
+	\textbf{Analytical Functions}
+
+	A complex function is a function that maps a complex variable to a complex result. 
+	A complex \textit{analytic} function does the same thing, \textit{and} is continuously differentiable over $ \mathbb{C} $  
+
+
+
+	Define $ \mathbb{D} $, an open and connected subset of the complex domain $ \mathbb{C} $
+
+	We define
+
+	\begin{equation}
+		f: \mathbb{D} \rightarrow \mathbb{C} \qquad\text{to be the analytic of } z_o \in \mathbb{D}
+	\end{equation}
+
+
+	Now, given $ f $, we can define the complex derivative $ f' $ 
+
+
+	\begin{equation}
+		f'(z_0) = \lim_{z \to z_0 }\frac{f(z) - f(z_0)}{ z-z_0 } \qquad \text{exists}
+		\label{eq:389:analytic}
+	\end{equation}
+
+	Noting that 
+
+	\begin{equation}
+		z \to z_0 \leftrightarrow |z - z_0| \to 0
+	\end{equation}
+
+	\eqref{eq:389:analytic}	can be rewritten as
+
+	\begin{equation}
+		f'(z_0) = \lim_{h\to0} \frac{1}{h}(f(z_0 + h) - f(z_0))
+	\end{equation}
+
+	\marginnote{$ h = z - z_0; z = z_0 + h $ }
+\end{definition}
+
+\begin{example}
+	Find the complex derivative
+	\begin{equation}
+		f(z) = z^n
+	\end{equation}
+	\begin{proof}
+
+	\begin{equation}
+		\begin{split}
+			f'(z) &= \lim_{h\to0} \frac{1}{h} \left(  (z+h)^n h - z^n \right) \\
+						&= \lim \frac{1}{h} \left( z^n = nz^{n-1}h + \binom{n}{2}z^{n-2}h^2 + \ldots + h^n-z^n\right)   \\
+						&= \lim \frac{1}{h} \left( nz^{n-1} + \binom{n}{2}z^{n-2}h + \ldots h^{n-1} \right)   \\
+						& \text{... Cancel out terms that go to 0} \\
+						&= (z^n)' \\
+						&= nz^{n-1} \\
+		\end{split}
+	\end{equation}
+
+\end{proof}
+	
+	
+\end{example}
+
+\marginnote{$ z = x + iy, \overline{z} = x - iy$ }
+
+\begin{example}
+
+	Find the complex derivative
+
+	\begin{equation}
+		f(z) = \overline{z}
+	\end{equation}
+
+	\begin{proof}
+		
+	
+
+	\begin{equation}
+		\begin{split}
+			f'(z) &= \lim_{h\to0} (\overline{z} + \overline{h} - \overline{z})  \\
+						&=  \lim_{h\to0} \frac{\overline{h}}{h}\\
+		\end{split}
+		\label{eq:389:l4ex2}
+	\end{equation}
+
+	We then take the limit along the real and imaginary axis separately
+	\marginnote{$ h = h_1 + ih_2 $ }
+
+	Real:
+
+	\begin{equation}
+		\lim_{h\to0} \frac{h_1}{h_1} = 1
+	\end{equation}
+
+	Imaginary:
+
+	\begin{equation}
+		\lim_{h\to0} \frac{-h_2}{h_2} = -1
+	\end{equation}
+	
+	\end{proof}
+
+	So the limit \eqref{eq:389:l4ex2} does not exist
+	
+\end{example}
+
+
+In the previous two examples we found that $ z^n $ is analytic and $ \overline{z} $ is not.
+
+
+
+\begin{example}
+	\begin{equation}
+		f(z) = e^z
+	\end{equation}
+	
+	
+	\begin{proof}
+	\begin{equation}
+		\begin{split}
+			 f'(z)&= f(z+h) - f(z)  \\
+			 &= e^{z+h} - e^z \\
+			 &=  e^{x+h_1}(\cos(y+h_2) + i \sin(y+h_2)) - e^x (\cos y + i \sin y) \\
+		\end{split}
+	\end{equation}
+
+	A Taylor series can be used to expand $ e^{x+h_1} $, $ \cos(y+h_2), \sin (y+h_2) $ 
+
+	\begin{equation}
+		\begin{split}
+			e^{x+h_1} cos(y+h_2) \times &\\
+																	&\left( e^x + e^x \frac{h_1}{1!} + \text{higher order terms} \right) \times \\
+																	& \left( \cos y - \frac{\sin y}{1!} h_2 + \text{higher order terms} \right)
+		\end{split}
+	\end{equation}
+	
+
+	\begin{equation}
+	\end{equation}
+
+	And then a bunch of terms can be cancelled out to leave us with a couple of terms and a bunch of higher order terms in $ h_1, h_2 $ 
+
+	\begin{equation}
+		= e^x \cos y - e^x \sin y + e^x h_1 \cos y + \ldots \text{higher order terms}
+	\end{equation}
+
+	And as a result
+
+	\begin{equation}
+		(e^z)' = \\lim_{h \to 0} \frac{1}{h} e^z h = e^z
+	\end{equation}
+
+		
+	\end{proof}
+
+	So $ e^z $ is analytic.
+\end{example}
+
+
+\subsubsection{Properties of complex derivative}
+
+
+\begin{enumerate}
+	\item $ (f+g)' = f' + g'$ 
+	\item $ (fg)' = f'g + fg' $ 
+	\item $ \frac{f}{g}' = \frac{f'g - fg'}{g^2} \cdot f(g(z))' = f'(g(z))g'(z) $ \marginnote{For the 3rd case here, range of $ g \in  $ domain of $ f $  }
+\end{enumerate}
+
+
+\begin{example}
+	\begin{equation}
+		(e^{z^3}) = e^{z^3} (z^3)' = 3z^2e^{z^{3}}
+	\end{equation}
+	
+\end{example}
+
+\begin{definition}
+	A function $ f $ is \textbf{entire} if $ f $ is analytic in $ \mathbb{C} $ 
+\end{definition}
+
+Examples of entire functions include $ e^z $, $ z^n $. Non-analytic functions include $ \frac{1}{z} $ since it is not defined at $ 0 $ i.e. it is not entire over $ \mathbb{C} $ 
+
+
+However, is $ \frac{1}{z} $ analytic over the rest of $ \mathbb{C} $?
+
+\begin{proof}
+	\begin{equation}
+		\begin{split}
+			\frac{1}{z}' &= \lim \frac{1}{h}(\frac{1}{z+h} - \frac{1}{z})  \\
+			 &= \lim \frac{1}{h} -\frac{h}{(z+h)z} \\
+			 &= -\frac{1}{z^2} - \lim -\frac{h}{(z+h)z^2} = -\frac{1}{z} \\
+		\end{split}
+	\end{equation}
+
+	Therefore $ \frac{1}{z}$  is analytic in $ \mathbb{C} - \{0\} $ 
+	
+\end{proof}
+
+
+\begin{theorem}
+	\textbf{ Cauchy-Riemann equations}
+
+	The Cauchy-Riemann equations give us a direct way of checking if a function is differentiable and if it is, it gives us the derivative.
+	It is a consequence of the fact that the limit defining $ f(z) $ must be the same no matter what direction $ z $ is approached.
+	Namely, if $ f $ as defined below is analytic\mn{Complex differentiable}
+
+	\begin{equation}
+		f(z) = u + iv
+	\end{equation}
+
+	Then,
+
+	\begin{equation}
+		f'(z) = \frac{\partial u}{\partial x}  + i\frac{\partial v}{\partial x}  = \frac{\partial v}{\partial y} - i \frac{\partial u}{\partial y} 
+	\end{equation}
+
+	In particular we're interested in the this set of PDEs (which is called the Cauchy-Riemann equations)
+
+	\begin{equation}
+		\begin{split}
+			\frac{\partial u}{\partial x} &= \frac{\partial v}{\partial y}\\
+			\frac{\partial u}{\partial y} &= - \frac{\partial v}{\partial x}
+		\end{split}
+	\end{equation}
+
+	The short form is as follows
+	\begin{equation}
+		u_x = v_y \qquad u_y = -v_x
+	\end{equation}
+	
+	
+
+	If $ f = u+iv $ and in $ \mathbb{D} $, then $ u, v $ satisfy
+
+	\begin{equation}
+		\frac{\partial u}{\partial x} = \frac{\partial v}{\partial y} 
+	\end{equation}
+
+	And
+
+	\begin{equation}
+		\frac{\partial u}{\partial y}  = - \frac{\partial v}{\partial x} 
+	\end{equation}
+
+	\begin{proof}
+		Since $ f $ is analytic, then
+
+
+		\begin{equation}
+			f'(z) = \lim_{h \to 0} \frac{1}{h} (f(z+h) - f(z)) 
+			\label{eq:389:l4ex3}
+		\end{equation}
+
+		Which exists and is independent of the way $ h \to 0 $.
+
+		Take the limits of the real and imaginary parts of \eqref{eq:389:l4ex3}:
+
+		Real:
+
+		\begin{equation}
+			\lim_{h_1 \to 0, h_1 \in \mathbb{R}} \frac{1}{h_1} (f(z+h_1) - f(z))  = \lim \frac{1}{h_1}(f(x+h_1+iy) - f(x+iy)) = \partial_x f(z)
+		\end{equation}
+
+		\begin{equation}
+			\lim_{ih_2 \to 0, h_2 \in \mathbb{R}} \frac{1}{h_2} (f(z+ih_2) - f(z))  = \lim \frac{1}{ih_2}(f(x+ih_2+iy) - f(x+iy)) = - \partial_y f(z)
+		\end{equation}
+
+		Since this limit is independent of how $ h \to 0 $, 
+
+		\begin{equation}
+			\partial_x f(z) = - i\partial_y f(z)
+		\end{equation}
+
+		Recall that $  f = u + iv$
+
+
+		\begin{equation}
+			\partial_x (u+iv) = - i\partial_y (u+iv) = -i \partial_y u + \partial_y v
+		\end{equation}
+
+		Therefore
+
+		\begin{equation}
+			\partial_x u = \partial_y v, \partial_x v = - \partial_y u
+			\label{eq:389:cauchy_reinmann}
+		\end{equation}
+		
+	\end{proof}
+	
+	
+	
+
+
+\end{theorem}
+
+
+
+\begin{definition}
+	Complex derivative:
+
+	Using the Cauchy-Riemann equations, we can define the complex derivative of $ f $  as
+
+	\begin{equation}
+		\frac{\partial f}{\partial z} \frac{1}{2}(\frac{\partial f}{\partial x}  - i\frac{\partial f}{\partial y})
+	\end{equation}
+	
+	\begin{equation}
+		\frac{\partial f}{\partial \overline{z}} \frac{1}{2}(\frac{\partial f}{\partial x}  - i\frac{\partial f}{\partial y})
+	\end{equation}
+
+	Then, via the Cauchy-Riemann equations, we have
+
+	\begin{equation}
+		\frac{\partial f}{\partial \overline{z}}  = 0
+	 \label{eq:389:l4ex5}
+	\end{equation}
+	
+
+\end{definition}
+
+\begin{proof}
+	Proof of \eqref{eq:389:l4ex5}:
+
+	Recall $ f = u+iv $ 
+
+	Plug this into the LHS of the expression:
+
+	\begin{equation}
+		\frac{\partial u}{\partial x}  + i(\frac{\partial v}{\partial y} ) + i(\frac{\partial u}{\partial x}  + i \frac{\partial v}{\partial y} ) \Rightarrow \partial_x u - \partial_y v = 0, \partial_y u + \partial_x v = 0
+	\end{equation}
+
+	Which is the Cauchy-Riemann equations \eqref{eq:389:cauchy_reinmann}
+	
+\end{proof}
+
+
+\begin{example}
+	Is $ f(z) = e^{z^5} \cdot  \sin z \cdot  \overline{z}^3 $  analytic?
+
+	\begin{equation}
+		\frac{\partial f}{\partial z} e^{z^5} \cdot  \sin z e \overline{z}^2 \neq 0
+	\end{equation}
+
+	So $ f $ is not analytic
+\end{example}
+
+
+\begin{example}
+	Is $ f(z) = |z|^6 $ analytic?
+
+	\begin{proof}
+	\begin{equation}
+		\frac{\partial y}{\partial \overline{z}} = \frac{\partial}{\partial z} (z \overline{z})^3 = z^3 \cdot 3 \overline{z}^2 \neq 0
+	\end{equation} 
+	\end{proof}
+
+	$ f $ is not analytic.
+	
+\end{example}
+
+Now that we know that analytic functions satisfy the Cauchy-Riemann equations, we can use this to prove that the converse holds, i.e that non-analytic functions do not satisfy [the Cauchy-Riemann equations]
+
+\begin{theorem}
+
+		\marginnote{Note abbreviation higher order terms $ \Leftrightarrow $ H.O.T }
+	Given $ f(x,y) $ continuously differentiable and satisfies the Cauchy-Riemann equations, then $ f $ is analytical
+
+	\begin{proof}
+		\begin{equation}
+			\begin{split}
+				f(x+h_1, y+h_2) - f(x,y) &\xrightarrow{\text{Taylor series}}  \\
+				 &= f(x,y) + \partial_x f(x, y) h_1 + \partial_y f(x, y) h_2 + \text{H.O.T} - f(x, y) \\
+				 & \ldots \text{cancel terms} \ldots \\
+				 &= \partial_x = \frac{\partial f}{\partial z} + \frac{\partial f}{\partial \overline{z}} \\
+				 &= \partial_y = \frac{\partial f}{\partial \overline{z}} - \frac{\partial f}{\partial z} \frac{1}{i}
+			\end{split}
+		\end{equation}
+
+
+		And then plugging this back into the initial expression we get
+
+		\begin{equation}
+			\begin{split}
+				f(x+h_1, y+h_2) - f(x,y) &=
+				(\frac{\partial f}{\partial z} \frac{\partial f}{\partial \overline{z}}) h_1 + 
+				(\frac{\partial f}{\partial \overline{z}} \frac{\partial f}{\partial z}) \frac{1}{i} h_2
+				+ \text{H.O.T} \\
+																 &= \frac{\partial f}{\partial z} (h_1  + i h_2) + \text{H.O.T} \\
+																 &= \frac{\partial f}{\partial z} h + \text{H.O.T} \\
+				f'(z) &= \lim_{h \to 0} \frac{1}{h} (\frac{\partial f}{\partial z} h + \text{H.O.T}) \\
+							&=  \frac{\partial f}{\partial z} z \text{   exists}
+			\end{split}
+		\end{equation}
+
+		So therefore $ f $ is analytic
+		
+	\end{proof}
+	
+	
+\end{theorem}
+
+\begin{example}
+	Is $ \sin z$ analytic?
+
+	\begin{equation}
+		\frac{\partial }{\partial \overline{z}} \sin z = 0 \rightarrow \sin z \text{ is analytic}
+	\end{equation}
+
+	In `slow motion',
+
+	\begin{equation}
+		\begin{split}
+			\frac{\partial \sin z}{\partial \overline{z}}  &= \frac{1}{2} \left( \frac{\partial \sin z}{\partial x} + i \frac{\partial \sin z}{\partial y}  \right)   \\
+			 \sin z&= \frac{1}{2i} \left( e^{iz} - e^{-iz} \right)   \\
+			 e^{iz} &= e^{ix-y} = e^{-y} (\cos x + i \sin y) \\
+			 \frac{\partial e^{iz}}{\partial \overline{z}} &= \frac{1}{2} (\partial_x + i \partial_y) \\
+			 = \ldots &= 0 \\
+		\end{split}
+	\end{equation}
+
+	Therefore $ \sin z $ is analytic
+	
+\end{example}
+
+
+TLDR of the lecture; one can find if the function is analytic by checking if the Cauchy-Riemann equations hold. This can be done by taking the complex derivative of the function w.r.t $ z $ and $ \overline{z} $. Then, by the theorem we proved, if $ \frac{\partial f}{\partial \overline{z}} = 0  $, then $ f $ is analytic and $ f'(z) = \frac{\partial f}{\partial z}  $ 
+
+\subsection{Power series}
+
+\begin{definition}
+	A \textbf{Power series} is an expression of the form
+
+	\begin{equation}
+		\sum^{\infty}_{n=0} a_n (z-z_0)^n
+	\end{equation}
+
+	Where $ a_n $ is a coefficient and $ z_0 $ the centre of the series.
+	The power series diverges if it is not converging absolutely, which it does at $ z_*  $ if \begin{equation}
+		\sum |a_n| (z_* - z_0)^n
+	\end{equation}
+	converges
+	
+\end{definition}
+
+\begin{theorem}
+
+	There exists radius of convergence $ R \ge 0 $ such that 
+
+	\begin{itemize}
+		\item The series converges absolutely in the disk $ |z-z_0| < R $
+		\item The series diverges for $ |z-z_0| \ge  R $
+	\end{itemize}
+
+	If
+	\begin{equation}
+		\lim_{n \to \infty} |a_n|^{1 /n}
+	\end{equation}
+	exists, then
+
+	\begin{equation}
+		\frac{1}{R} = \lim_{n \to \infty} |a_n|^{1 /n}
+	\end{equation}
+
+	\begin{lemma}
+	If $ \lim | \frac{a_{n+1}}{a_n}|$ exists, then 
+
+	\begin{equation}
+		\frac{1}{R} = \lim_{n \to \infty} | a_{n+1}/a_n |
+	\end{equation}
+	
+	\end{lemma}
+\end{theorem}
+
+\begin{example}
+	Find the radius of convergence for 
+
+	\begin{equation}
+		\sum_{n=0}^{\infty} \sqrt{n} z^n
+	\end{equation}
+
+	\begin{proof}
+
+	Let $ z_0 = 0, a_n = \sqrt{n}  $ 
+
+	\begin{equation}
+		\begin{split}
+			\lim_{n \to \infty} \sqrt{n} ^{\frac{1}{n}}  &= \lim_{n \to \infty} n^{1 /2n}  \\
+			  \ln n^{1 /2n} &= \frac{1}{2n} \ln(n) \text{ which } \to 0 \text{ as } n \to \infty \\
+				n^{\frac{1}{2n}} \rightarrow e^0 = 1 &\Rightarrow R = \frac{1}{1} = 1
+		\end{split}
+	\end{equation}
+	
+		
+	\end{proof}
+	
+	
+\end{example}
+
+
+\begin{theorem}
+	If $ \sum a_n z^n $  and $ \sum b_n z^n $  have radius of conversion of at least $ R $ 
+
+	\begin{enumerate}
+		\item 
+
+	\begin{equation}
+		 \sum a_n z^n  +  \sum b_n z^n  =  \sum (a_n + b_n) z^n 
+	\end{equation}
+	and has radius of convergence of at least $ R $
+
+\item 
+
+	\begin{equation}
+		 \sum a_n z^n  \cdot \sum b_n z^n
+	\end{equation}
+
+	has radius of convergence equal to $ R $ 
+
+\item 
+
+	\begin{equation}
+		\sum a_n z^n
+	\end{equation}
+	is complex differentiable (and therefore analytic) in $ |z| < R $ and it's derivative is
+
+	\begin{equation}
+		\sum a_n n z^{n-1}
+	\end{equation}
+
+	with radius of convergence $ R $
+\item 
+	\begin{equation}
+		a_n = \frac{1}{n! f^n|_0}
+	\end{equation}
+
+where 
+\begin{equation}
+	f(z) = \sum^{\infty}_{n=0} a_n z^n
+\end{equation}
+
+	\end{enumerate}
+	
+	
+\end{theorem}
+
+
+
+
+\subsection{Lecture 5}
+\end{document}
+

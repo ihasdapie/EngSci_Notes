@@ -1,8 +1,0 @@
-\begin{Verbatim}[commandchars=\\\{\}]
-\PYG{n+nf}{movhi}\PYG{+w}{ }\PYG{n+no}{r9}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x1122}
-\PYG{+w}{	}\PYG{c+c1}{; Sets the upper 16 bits of r9 to 0x1122}
-\PYG{+w}{	}\PYG{c+c1}{; and the lower 16 bits to zero}
-\PYG{n+nf}{ori}\PYG{+w}{ }\PYG{n+no}{r9}\PYG{p}{,}\PYG{+w}{ }\PYG{n+no}{r9}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0x3344}
-\PYG{+w}{	}\PYG{c+c1}{; bitwise OR the value in r9 with 0x3344}
-\PYG{+w}{	}\PYG{c+c1}{; which will set the lower 16 bits to 0x3344}
-\end{Verbatim}

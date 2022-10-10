@@ -1,0 +1,7 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+HEAPSORT(A)
+for i = A.length \PYGZhy{}\PYGZgt{} 2,
+	swap A[1], A[i]
+	A.heapsize = A.heapsize \PYGZhy{} 1
+	HEAPIFY(A, 1)
+\end{Verbatim}
