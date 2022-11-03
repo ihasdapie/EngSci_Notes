@@ -11,6 +11,8 @@
 
 
 
+
+
 \begin{itemize}
 	\item Lecture recordings on \href{https://tinyurl.com/2jthyk8k}{YouTube}
 	\item Online notes: \href{https://www.eecg.utoronto.ca/~moshovos/ECE352-2022}{https://www.eecg.utoronto.ca/~moshovos/ECE352-2022/}
@@ -144,7 +146,7 @@ This is common in embedded systems and how it is formatted isn't super clearly s
 \end{definition}
 
 
-\section{NIOS II Preliminary}
+\section{Memory and NIOS II}
 
 
 \subsection{Lecture 3: Behavioural Model of Memory}
@@ -1304,6 +1306,121 @@ epilogue:
 \end{minted}
 \end{listing}
 
+
+
+
+Another example of a recursive function is the following routine which detects whether a string is a palindrome.
+
+
+Note that strings in \texttt{c} are represented an null-terminated array of characters 
+\begin{listing}[H]
+\begin{minted}{c}
+char s[] = "abba";
+\end{minted}
+\end{listing}
+
+Which in assembly looks like:
+
+\begin{equation}
+	.data
+	s: .byte 'a', 'b', 'c', 'a', 0
+	;; Or, can write with double quotes i.e. string literal
+	s: .string "abba"
+\end{equation}
+
+The \texttt{c} implementation of this function is as follows:
+
+\begin{listing}[H]
+\begin{minted}{c}
+int palindrome(char *a)
+{
+	char * e;
+	if (a == NULL) return 1; // empty string is a palindrome
+	e = a;
+	while (*e != 0) e++; // find end of string
+	if (e == a) return 1; // string of length 1 is a palindrome
+	e--;
+	while ((*a != 0) && (*a == *e)) {
+		a++;
+		e--;
+	}
+	if (*a == 0) return 1; // is a palindrome
+	return 0;
+
+}
+\end{minted}
+\end{listing}
+
+In assembly this would be as follows:
+
+
+\begin{listing}[H]
+\begin{minted}{gas}
+	.text
+palindrome:
+	 beq r4, r0, ret1  ;; null string is a palindrome
+	 add r8, r4, r0 ;; a in r4 (function call convention), e in r8
+
+findzero:
+	ldb r9, 0(r8) ;; r9 <- *e
+	beq r9, r0, foundzero
+	addi r8, r8, 1
+	br findzero
+
+foundzero:
+	beq r8, r4, ret1 ;; string of length 1 is a palindrome
+	subi r8, r8, 1 ;; move back to last nonzero char
+
+cmploop:
+	ldb r10, 0(r4) ;; r9 <- *a
+	beq r10, r0, after ;; end loop when a gets to the end of the string
+	ldb r9, 0(r8) ;; r9 <- *e
+	bne r9, r10, after ;; if *a != *e, then not a palindrome
+	addi r4, r4, 1 ;; increment a
+	subi r8, r8, 1 ;; decrement e
+	br cmploop
+
+after:
+	ldb r9, 0(r4) ;; r9 <- *a
+	beq r9, r0, ret1 ;; if *a == 0, then is a palindrome
+
+ret0: ;; not palindrome
+
+ret1: ;; is palindrome
+	addi r2, r0, 1
+
+\end{minted}
+\end{listing}
+
+As an example this palindrome function can be called as follows
+
+
+\begin{listing}[H]
+\begin{minted}{gas}
+	.data
+s: .string "abba"
+
+	.text
+	.global main
+
+main:
+	movia r4, s
+	call palindrome
+\end{minted}
+\end{listing}
+
+
+
+
+
+
+
+
+
+
+
+\section{GPIO}
+
 \subsection{Lecture 12: Devices}
 
 
@@ -1316,7 +1433,11 @@ There are two registers used to communicate with the NIOSII GPIO interface which
 	\item \texttt{dir}  (data register) at \texttt{0xFF200064} 
 \end{itemize}
 
-\texttt{dr} is the data word to communicate in and out of the GPIO interface, and \texttt{dir} denotes if the signal is an input or an output. Note that the \texttt{stwio} and \texttt{ldwio} variants of the \texttt{stw} and \texttt{ldw} instructions must be when interfacing with IO devices
+\marginnote{The NIOSII has two GPIO interfaces. THe other, GPIO2, is at \texttt{0xFF200070}}
+
+\texttt{dr} is the data word to communicate in and out of the GPIO interface, and \texttt{dir} denotes if the signal is an input or an output.
+The PIT provides 32 bits of data which can be independently mapped to be input or output depending on the value in DIR. If bit 0 of DIR is 1, then D0 becomes an output. And so forth for the rest of the bits.
+Note that the \texttt{stwio} and \texttt{ldwio} variants of the \texttt{stw} and \texttt{ldw} instructions must be when interfacing with IO devices
 
 
 
@@ -1327,19 +1448,1177 @@ There are two registers used to communicate with the NIOSII GPIO interface which
 \end{figure}
 
 
-Two exercises we will cover include building a thermostat with the GPIO pins and building a keyboard. 
+Two exercises we will cover include building a thermostat with the GPIO pins and building a keyboard.
+
+
+
+\begin{listing}[H]
+\begin{minted}{gas}
+;; configure all pins as outputs
+addi r8, r0, 0xFFFFFFFF
+movia r9, 0xFF200064
+stwio r8, 0(r9)
+
+;; configure pins D0-D3 as outputs, D4-D31 as inputs
+addi r8, r0, 0x0000000F
+movia r9, 0xFF200064
+stwio r8, 0(r9)
+\end{minted}
+\end{listing}
+
+\marginnote{A write to an input pin will be silently ignored.}
+
+
+
+Given that $ D_0 $ is connected to the thermostat's output and $ D_3 $ is connected to the heat fan motor,
+
+
+\begin{listing}[H]
+\begin{minted}{gas}
+PIT1_BASE equ, 0xFF200060
+PIT1_DR_OFFSET equ, 0x0
+PIT1_DIR_OFFSET equ, 0x4
+
+	.text
+heat:
+	movia r9, PIT1_BASE
+	addi r8, r0, 8
+	stwio PIT1_DIR_OFFSET(r9) ;; configure all pins but d3 as inputs (0x00000008)
+	stwio r0, PIT1_DR_OFFSET(r9) ;; turn off the motor
+fever:
+	ldwio r8, PIT1_DR_OFFSET(r9) ;; read all pins
+	andi r8, r8, 0x1 ;; mask off all but d0
+	beq r8, r0, fanon ;; turn fan on because it's cold (d0 == 9)
+fanoff:
+	stwio r0, PIT1_DR_OFFSET(r9) ;; turn off the motor
+	br fever
+fanon:
+	addi r8, 8
+	stwio r8, PIT1_DR_OFFSET(r9) ;; turn on the motor
+	br fever
+\end{minted}
+\end{listing}
+\marginnote{In the lecture notes he uses 0x00000004 but I think that's a typo.}
+
+Something similar can be implemented in \texttt{c} 
+
+\begin{listing}[H]
+\begin{minted}{c}
+
+#define DR ((unsigned int* ) 0xFF200060)
+#define DIR ((unsigned int* ) 0xFF200064)
+
+void heat(void)
+{
+	unsigned int t;
+	*DIR = 0x8;
+	*DR = 0x0;
+	while (1)
+	{
+		t = *DR;
+		if (t & 0x1)
+			*DR = 0x0;
+		else
+			*DR = 0x8;
+	}
+}
+\end{minted}
+\end{listing}
+
+
+A nicer way that this can be implemented is to use a struct to represent the PIT
+
+
+\begin{listing}[H]
+\begin{minted}{c}
+
+struct PIT_t {
+	unsigned int DR;
+	unsigned int DIR;
+};
+
+struct PIT_t *pitp = (struct PIT_t *) 0xFF200060;
+
+void heat(void)
+{
+	unsigned int t;
+	pitp->DIR = 0x8;
+	pitp->DR = 0x0;
+	while (1)
+	{
+		t = pitp->DR;
+		if (t & 0x1)
+			pitp->DR = 0x0;
+		else
+			pitp->DR = 0x8;
+	}
+}
+\end{minted}
+\end{listing}
+
+This chunk of code exploits the fact that the DR element appears first and is immediately followed by DIR. This allows us to elegantly map the fields of the struct to the actual memory layout (line 7)
+
+Another example let's consider debouncing the metal switch used inside the thermostat. Whenever metal contacts are used there is a short period of time where the switch will rapidly change state. This may not be what the user intends and as such we'd like to debounce the values to make it more sane.
+To avoid this we take a number of samples and assume that the value read is 1 only if the number of samples that was 1 is greater than $ \frac{N}{2} $ 
+
+
+
+\begin{listing}[H]
+\begin{minted}{gas}
+PIT1_BASE equ, 0xFF200060
+PIT1_DR_OFFSET equ, 0x0
+PIT1_DIR_OFFSET equ, 0x4
+
+	.text
+heat:
+	movia r9, PIT1_BASE
+	addi r8, r0, 8
+	stwio PIT1_DIR_OFFSET(r9) ;; configure all pins but d3 as inputs (0x00000008)
+	stwio r0, PIT1_DR_OFFSET(r9) ;; turn off the motor
+
+fever:
+	addi r10, r0, 1000 ;; take 1000 samples
+	add r11, r0, r0 ;; count of samples that are 1
+
+sampling:
+	ldwio r8, PIT1_DR_OFFSET(r9) ;; read all pins
+	andi r8, 0x1 ;; mask out r0 (thermostat)
+	add r11, r11, r8 ;; increment count if r8 is 1
+	subi r10, r10, 1 ;; decrement sample count
+	bne r10, r0, sampling ;; loop if we still have samples to take
+
+	addi r10, r10, 500 ;; check if we have more than 500 samples that are 1
+	bgt r11, r10, fanon
+
+fanoff:
+	stwio r0, PIT1_DR_OFFSET(r9) ;; turn off the motor
+	br fever
+
+fanon:
+	addi r8, 8
+	stwio r8, PIT1_DR_OFFSET(r9) ;; turn on the motor
+	br fever
+\end{minted}
+\end{listing}
+
+
+\subsubsection{The PIT implementation}
+
+This example is a PIT with 8 connections with $ DR $ at \texttt{0xFF1110}  and $ DIR $ at \texttt{0xFF1114}. A 32 bit PIT should follow.
+
+
+At a physical level the PIT presents the following signals
+
+
+\begin{enumerate}
+	\item Data: 8 wires that supply the value to be written to or read from the PIT
+	\item DIR write signal: when this is 1 the value in the data wires is written to the DIR
+	\item DR write signal: when this is 1 the value in the data wires is written to the DR
+	\item DR read signal: when this is 1 the data signals are placed into output mode and take on values that currently appear on external port connections
+	\item External port: 8 wires that connect to the external world
+\end{enumerate}
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-16-00-30-46.png}
+	\caption{One PIT bit}
+\end{figure}
+
+The DRO and DIR boxes are latches whose values change using the Data and Write signals. The triangle looking things are \href{https://en.wikipedia.org/wiki/Three-state_logic}{tri-state buffers}.
+
+\begin{itemize}
+	\item DIR = 1 -> tri-state latch is closed -> passes value of DRO to external connection
+	\item DIR = 0 -> tri-state latch is open -> external source determines value on the connection
+		\begin{itemize}
+			\item resistor helps drive high voltage from external source
+		\end{itemize}
+	\item DRread = 1 -> opens upper tristate buffer, puts external value into Data line
+\end{itemize}
+
+Eight of these can then be chained together to form a 8 bit PIT.
+
+
+\subsubsection{Memory}
+
+Our memory needs to meet these requirements
+
+\begin{enumerate}
+	\item Load/store operations
+	\item Byte, halfword, or word types
+	\item Addr of 32 bits
+	\item data value of at most 32 bits for read/write values
+	\item A do-nothing signal
+\end{enumerate}
+
+1) can be implemented with a signle read-write signal. 2)) can be done with 2 signals. Let's use 00 for byte, 01 for half-word, and 11 for long-word. 10 is not used.
+3) and 4) need 32 signals each, and 5) requires a master-enable signal. This is useful to prevent the memory from taking on transient values.
+
+
+Now comes the task of connecting the PIT to the memory interface.
+First we connect the PIT data lines to the lower 8 bits of the memory interface. So DIR, DRO, DRI can be accessed via load/store operations
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-16-00-55-19.png}
+	\caption{We'll also need to check if the address being accessed is the address of the PIT. The easiest way to do this is to just use an AND across the address lines and pass that signal to DREnable}
+\end{figure}
+
+
+DRenable can now be combined with R/W to form a single signal that generates the DRread and DRwrite signals
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-16-00-57-58.png}
+\end{figure}
+
+Something similar can be done for DIRwrite.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-16-00-58-42.png}
+	\caption{The complete design}
+\end{figure}
+
+
+\subsection{Lecture 12: UART}
+
+The (JTAG) UART device is a UART implemented over the JTAG interface, which for the NIOSII is implemented over USB. 
+UART stands for Universal Asynchronous Receiver Transmitter. It is a communication protocol which allows for non-instantaneous communication between two devices.
+
+
+\begin{itemize}
+	\item Starts at address \texttt{0xFF201000}
+	\item Receiver Register RR at an offset of 0
+	\item Transmitter Register at an offset of 0 (same as RR)
+	\item Control and status register, CSR at an offset of 4
+\end{itemize}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-16-01-58-27.png}
+	\caption{Register format}
+\end{figure}
+
+There are two transactions that can be asked of the UART: (1) send a character and (2) receive a character.
+They are implemented by placing bits into the data to send/receive into the transmitter/receiver register.
+However, in real life communication is more difficult than just that; sending characters takes considerably longer than the CPU's speed so we must be able to wait while the UART is sending a character before an attempt to send another one is made. Also, we should only read a character from the RR only if one has been received from the external source. This reading may also need to be buffered due to the variable nature of RR receive speed.
+
+
+\textbf{sending a character}  
+
+Here's a subroutine for sending the character in \texttt{r4}. 
+
+
+\begin{listing}[H]
+\begin{minted}{gas}
+.equ JTAG_UART_BASE, 0xFF201000
+.equ JTAG_UART_RR, 0
+.equ JTAG_UART_TR, 0
+.equ JTAG_UART_CSR, 4
+
+	.text
+putchar:
+	movia r8, JTAG_UART_BASE
+wait:
+	ldwio r2, JTAG_UART_CSR(r8) # read csr
+	srli r2, r2, 16 # keep only upper 16 (shift right logical immediate)
+	;; The csr's bits 16-31 contains a number which
+	;; is the number of slots in the queue avaliable 
+	;; to accept requests. If the number is 0, then
+	;; the queue is full and we must wait.
+	beq r2, r0, wait # wait until upper 16 bits are nonzero
+
+	stwio r4, JTAG_UART_TR(r8) # place it into the FIFIO
+	ret
+wait:
+
+
+
+\end{minted}
+\end{listing}
+
+
+\textbf{receiving a character}
+
+To receive a character we must wait until a character is received. This information is in RR
+
+\begin{itemize}
+	\item 0-7 contain the character, if one has been received
+	\item 15 is 1 if a character has been received. If it is 0, then no character has been received and 0-7 are meaningless
+	\item 31-16 contain additional information e.g. number of additional characters received and are waiting in the incoming queue.
+\end{itemize}
+
+
+\begin{listing}[H]
+\begin{minted}{gas}
+.equ JTAG_UART_BASE, 0xFF201000
+.equ JTAG_UART_RR, 0
+.equ JTAG_UART_TR, 0
+.equ JTAG_UART_CSR, 4
+
+	.text
+getchar:
+	movia r8, JTAG_UART_BASE
+
+wait:
+	ldwio r2, JTAG_UART_RR(r8) ;; read RR in r2
+	andi r10, r2, 0x8000 ;; extract bit 15
+	beq r10, r0, wait ;; wait until bit 15 is 1
+	andi r2, r2, 0xff ;; keep only character (bit 0-7) in r2
+	ret
+
+
+
+\end{minted}
+\end{listing}
+
+\marginnote{Both of these subroutines busy waits are used. This is slow and inefficient. A better way is to use interrupts, which will be covered in a later lecture}
+
+
+
+\begin{listing}[H]
+\begin{minted}{gas}
+;; An echo routine
+.equ JTAG_UART_BASE, 0xFF201000
+.equ JTAG_UART_RR, 0
+.equ JTAG_UART_TR, 0
+.equ JTAG_UART_CSR, 4
+
+  .text
+echo:
+  movia r8, JTAG_UART_BASE
+waitr:
+  ldwio r2, JTAG_UART_RR(r8)    # read RR in r2
+	# extract bit 15 in register r10 / keep a copy of r9 since it contains the character if any
+  andi  r9, r2, 0x8000          
+	# if bit 15 was zero, there was no character, keep waiting/trying
+  beq   r9, r0, waitr           
+	# a character was received, copy the lower 8 bits to r2 and return
+  andi  r2, r2, 0xff            
+
+waitt:
+	# read CSR in r9
+  ldwio r9, JTAG_UART_CSR(r8)   
+	# keep only the upper 16 bits
+  srli  r9, r9, 16              
+	# as long as the upper 16 bits were zero keep trying
+  beq   r9, r0, waitt           
+	# place it in the FIFO
+  stwio r2, JTAG_UART_TR(r8)    
+	# life is interesting, keep doing what you do
+  br    waitr                  
+	# never reaches here, this is for show
+  ret                           
+
+
+\end{minted}
+\end{listing}
+
+At the communication link level the device represents the characters as a stream of bits. Each bit is communicated by setting the line to the corresponding voltage level for a pre-specified duration; this is the bit-cell shown.
+\begin{definition}
+	\textbf{baud rate} : number of bit cells within on second. For example 9600 baud means a bit time of $ \frac{1}{9600} = 104.16$ microseconds, so it would take 1.0416 milliseconds at least to send a full byte. Note that each byte has a start and stop bit so a byte takes 10 bit cells to transmit.
+\end{definition}
+
+Ideally the transmitter and receiver would use identical time references for the bit cells, which would make life easy because it would mean the receiver can simply just take a single sample at the center of each bit cell to reconstruct the byte. 
+However, life is not so easy and real-life devices have phase differences. 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-16-03-26-20.png}
+	\caption{Phase differences}
+\end{figure}
+
+\sidenote{In practice there shoulnd't be a difference of more than 20\% between the stop bit and where the receiver things the stop bit is. This is because of RS-232C standard imposing a requirement imposing a maximum of 2\% difference between device baud rates, and the fact that there are start/stop bits which allow for the receiver to sync to sender time.}
+
+The common solution for this problem is to use over-sampling, i.e. taking several samples to detect the 0->1 transition for the stop/idle to start bits, then making carefully chosen single samples to fall at the center of bit time. 
+For a receiver that takes 16 samples per bit cell, generally the ith sample should be taken at $ (24 + i * 16) $  cycles, i.e. pass 16 samples to get past start bit and then another 8 to go to the middle of the first bit cell and so forth.
+
+Even with these measures communication errors\sn{FRAME Errors} can still occur. Further reduction of errors can be achieved by using using an additional parity bit which can be used to detect single errors.
+
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-16-03-23-05.png}
+\end{figure}
+
+\subsection{Lecture 13: Interrupts \& UART}
+In the previous lecture we used busy polling to communicate with the serial device, i.e. probing the status register until the desired condition was met.
+Not only is this a wasteful use of device resources, it is also difficult to scale to multitasking scenarios.
+
+At a high level, interrupts work as follows:
+
+
+\begin{enumerate}
+	\item The processor is executing instructions
+	\item A device requests an interrupt
+	\item The processor decides to grant that request, i.e. finishing current instruction and then inducing a call to a special interrupt handler routine
+	\item Program flow is restored to previous instruction
+\end{enumerate}
+
+
+Therefore there are a few requirements that must be met for interrupts to work
+
+\begin{enumerate}
+	\item Devices must be able to request interrupts
+	\item Must be able to signal to device that it's interrupt has been handled
+	\item Must have a way to map interrupts to the correct interrupt handler
+	\item Need to know where the interrupt handler lives in memory
+	\item Must be able to save and restore state affected by an interrupt call
+\end{enumerate}
+
+Requirements 1 and 2 are handled by having two directed wires between the CPI and the device through which request and response `handshake's can be implemented. The NIOS II provides 32 interrupt request wires IRQ0 to IRQ31, and notifying a device is done in software i.e. writing to a specific location in memory. Exact process is device-specific.
+Requirements 3 and 4 i.e. inducing an interrupt handler. One way that this can be done is to have a subroutine at a hard-coded address for all interrupts which then queries which device requested the interrupt and then inducing the call to the appropriate handler. This is generally implemented as some sort of lookup table. The NIOS II implements this by having all interrupt requests start executing code at \texttt{0x00000020}; the \texttt{.section exceptions, "ax"} directive can be used to assign code to that part of memory. That code must interrograte all devices to figure out which devices are requesting interrupts and then fire off the appropriate ISRs.
+Requirement 5 can be met by just pushing everything relevant onto the stack.
+
+
+
+\begin{definition}
+
+	\begin{itemize}
+		\item \textbf{ctl0}: Master interrupt enable switch. Bit 0 is 1 means interrupts will be serviced; they will be ignored otherwise.  
+		\item \textbf{ctl1}: Preserves current state of ctl0 upon accepting an interrupt
+		\item \textbf{ctl3}: Enable/disable specific IRQ lines. Interrupts are accepted for IRQ$i$ if bit $ i $ of ctl3 is 1 and bit 0 of ctl0 is 1
+	\end{itemize}
+
+	Reading and writing from control registers is done through two specialized instructions; \texttt{rdctl ctrlx, ry}: reads value of a control register ctrlx and stores in ry, and \texttt{wrctl ctrlx, ry} which writes the value of ry into ctrlx.
+	Also, \texttt{r29} also participates by storing the PC of the instruction following that of the interrupt and commonly is aliased to be \texttt{ea}, or exception address.
+
+\end{definition}
+
+The more detailed sequences is therefore as follows
+
+\begin{itemize}
+	\item Device assert an IRQ line to request an interrupt
+	\item Processor finishes current instruction
+	\item Processor saves the current interrupt enable bit (storing ctl0 into ctl1), then disables ctl0 to disable further interrupts
+	\item Set $ ea = PC + 4 $; the PC immediately following the instruction that had just been executed
+	\item Set $ PC = 0x20 $ so that execution continues in interrupt handler
+	\item Handler terminates with \texttt{eret} which will restore ctl0 from ctl1 and PC from ea
+\end{itemize}
+
+
+\subsection{Lecture 14: Timer}
+
+
+In lieu of lecture notes here is a big chunk of code which uses the NIOSII timer device to wait a second.
+
+
+\begin{listing}[H]
+\begin{minted}{gas}
+.equ  TIMER0_BASE,      0xFF202000
+.equ  TIMER0_STATUS,    0
+.equ  TIMER0_CONTROL,   4
+.equ  TIMER0_PERIODL,   8
+.equ  TIMER0_PERIODH,   12
+.equ  TIMER0_SNAPL,     16
+.equ  TIMER0_SNAPH,     20
+.equ  TICKSPERSEC,      500000000
+      .text
+waitasec:
+      movia r8, TIMER0_BASE
+      addi  r9, r0, 0x8                   ;; stop the counter
+      stwio r9, TIMER0_CONTROL(r8)
+ 
+      ;; Set the period registers to 50M
+      addi  r9, r0, %lo (TICKSPERSEC)
+      stwio r9, TIMER0_PERIODL(r8)
+      addi  r9, r0, %hi(TICKSPERSEC)
+      stwio r9, TIMER0_PERIODH(r8)
+ 
+;; tell the counter to start over automatically and start counting
+      addi  r9, r0, 0x6                   ;; 0x6 = 0110 so we write 1 to START and to CONT
+      stwio r9, TIMER0_CONTROL(r8)
+ 
+onesec:
+      ldwio       r9, TIMER0_STATUS(r8)   ;; check if the TO bit of the status register is 1
+      andi        r9, r9, 0x1
+      beq         r9, r0, onesec
+ 
+      addi        r9, r9, 0x0             ;; clear the TO bit
+ 
+      stwio       r9, TIMER0_STATUS(r8)
+ 
+      ;; decrement the number of remaining seconds and repeat until this becomes zero
+      subi        r4, r4, 1
+     
+      bne         r4, r0, onesec         
+ 
+      ;; stop the counter before exiting
+ 
+      addi        r9, r9, 8        
+      stwio       r9, TIMER0_CONTROL(r8)
+      ret
+           
+;; And here’s a function that calls waitasec asking it to wait for 20 seconds:
+      .text
+      .global main
+
+main:
+      addi  r4, r0, 20
+      call  waitasec
+      ret
+
+\end{minted}
+\end{listing}
+
+Checking the current value of the period registers cannot happen directly and instead must be done through snap registers.
+
+\begin{listing}[H]
+\begin{minted}{gas}
+   movia r8, TIMER0_BASE        
+   stwio r0, TIMER0_SNAPL(r7)  # Take a snapshot of the period registers
+   ldwio r9, TIMER0_SNAPL(r7)  # Read snapshot bits 0..15
+   ldwio r10, TIMER0_SNAPH(r7) # Read snapshot bits 16...31
+   slli  r10, r10, 16          # Shift the upper bits to positions 16 through 31 in register r10
+   or    r9, r9, r10           # Combine bits 0..15 and 16...31 into one register
+\end{minted}
+\end{listing}
+
+
+\subsection{Lecture 15: Code Races}
+
+Consider the following c code:
+
+\begin{listing}[H]
+\begin{minted}{c}
+      int   cnt = 9;
+interrupt:
+            cnt++;
+program:
+            while (1) cnt--;
+\end{minted}
+\end{listing}
+
+At the machine code level this can look like
+
+\begin{listing}[H]
+\begin{minted}{gas}
+      .data
+cnt:  .word 9
+      .section .exceptions, “ax”
+iHdlr:     
+H1:         ldw         r9, 0(r8)
+H2:         addi        r9, r9, 1  
+H3:         stw         r9, 0(r8)
+            eret
+      .text
+main:
+            movia       r8, cnt
+            movi        r9, 1
+            wrctl       ctl0, r1
+wait:      
+I1:         ldw         r11, 0(r8)
+I2:         addi        r11, r11, -1
+I3:         stw         r11, 0(r8)
+            br          wait
+\end{minted}
+\end{listing}
+
+
+We can possibly observe the sequence $ 10, 11, 10, 9$, and so forth because of a \textit{race} between the interrupt and the while loop.
+This is because NIOS II does not implement atomic operations, therefore the same value can be loaded a register for two operations that change it without coordinating between the two programs, and therefore cause undesirable behaviour.
+Other architectures may implement atomic operations, which are operations that cannot be by another instruction (usually at the expense of performance).
+
+
+\subsection{Lecture 16: Emulating instructions in software}
+
+Interrupts can be used for more than just communicating with I/O devices, i.e. for detecting erroneous conditions during execution, misaligned memory access, or OS calls.
+They can also be used to emulate an instruction in software.
+
+For example, on the NIOSII there is a \texttt{mulxuu rC, rA, rB} instruction to multiply two 32 bit registers and then store the upper 32 bits of the result into a rC.
+Some NIOSII implementations may include a hardware unit which implements this instruction, but others may rely on emulation to execute this instruction instead.
+Likewise, the 80386 processor does not have a hardware unit to implement floating point instructions (but one could do them in hardware with the 80387 co-processor). If one did not have the 80387 they can use interrupts to emulate the instruction in software instead (though slower)
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-27-58.png}
+	\caption{Encoding of the \texttt{mulxuu} instruction}
+\end{figure}
+
+Bits 31-27, 26-22, 21-17 encodes the source and destination registers. 16-11 contains 0x7, 10-6 the value 0, and 5-0 the value 0x31. So TLDR bit 16 is 0 and the lower 16 bits 0x383a.
+
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-30-03.png}
+	\caption{Interrupt handler flowchart}
+\end{figure}
+
+
+
+This chunk of code implements the first item in the flow chart, saving all the registers onto the stack. Note the commented \texttt{rdctl} checking for software interrupts
+
+\begin{listing}[H]
+\begin{minted}{gas}
+      .section exceptions
+ 
+      ; tell the assembler to not introduce any additional instructions overwriting registers
+      .set nobreak
+      .set noat
+ 
+handler:                                                                       
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ; store all registers on the stack
+        ; forming an array of words
+        ; the value for register X is at sp+X*4 where X a number 0...32
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ; save all registers on the stack
+        subi  sp, sp, 32 * 4
+        stw r0,0(sp)
+        stw r1,4(sp)
+        stw r2,8(sp)
+        stw r3,12(sp)
+        stw r4,16(sp)
+        stw r5,20(sp)
+        stw r6,24(sp)
+        stw r7,28(sp)
+        stw r8,32(sp)
+        stw r9,36(sp)
+        stw r10,40(sp)
+        stw r11,44(sp)
+        stw r12,48(sp)
+        stw r13,52(sp)
+        stw r14,56(sp)
+        stw r15,60(sp)
+        stw r16,64(sp)
+        stw r17,68(sp)
+        stw r18,72(sp)
+        stw r19,76(sp)
+        stw r20,80(sp)
+        stw r21,84(sp)
+        stw r22,88(sp)
+        stw r23,92(sp)
+        stw r24,96(sp)
+        stw r25,100(sp)
+        stw r26,104(sp)
+        stw r27,108(sp)
+        stw r28,112(sp)
+        stw r29,116(sp)
+        stw r30,120(sp)
+        stw r31,124(sp)
+      rdctl et, ctl4                ; Check that interrupt was caused by      software
+      beq et, r0, software          ; if not, it's a hardware interrupt ignore
+     
+      HANDLE HARDWARE INTERRUPTS HERE
+ 
+      br  iEpilogue
+
+\end{minted}
+\end{listing}
+
+The software interrupt handler checks the opcode in order pass execution to the appropriate subroutine. For \texttt{mulxuu} this is just comparing the lower 16 bits of \texttt{ea} with \texttt{0x383a}
+
+\begin{listing}[H]
+\begin{minted}{gas}
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ; read the instruction opcode to test whether it is a mulxuu
+      ; ea points to the instruction
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+software:
+      ldw   r9, -4(ea) ;; lecture notes uses stw but this should be ldw
+      add   r10, r9, r0 ; keep a copy of the opcode
+      andi  r9, r9, 0xffff    ; keep just the lower 16 bits
+      cmpeqi      r11, r9, 0x383a
+      beq   r11, r0, notmulxuu
+      srli  r10, r10, 16      ; shift the upper 16 bits into the lower 16
+      andi  r11, r10, 0x1     ; test bit 0 which used to be bit 17
+      bne   r11, r0, notmulxuu ; if not zero this is not mulxuu
+
+\end{minted}
+\end{listing}
+
+
+If we get to the \texttt{mulxuu} handler we need to load the registers from the stack
+
+
+\begin{listing}[H]
+\begin{minted}{gas}
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ; Operand index calculations
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ismulxuu:
+      ; now calculate indexes into the stack for accessing
+      ; the input and output operands
+      ; treat the stack as a 32-entry array of words
+      ; we extract the 5 bit field for each operand
+      ; multiply by four because each entry is four bytes
+      ; and add the stack point which is the base of the array
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      srli  r10,r10,1   ; keep just the upper 15 bits of the opcode
+      ; rC
+      andi  r11, r10, 0x1f    ; these are the 5 bits indicating rC the destination register
+      slli  r11, r11, 2 ; multiply by 4
+      add   r11, r11, sp      ; add the base of the array
+      ; rB
+      srli  r10, r10, 5
+      andi  r12, r10, 0x1f ; keep the bits for rB
+      slli  r12, r12, 2 ; multiply by 4
+      add   r12, r12, sp      ; add the base of the array
+      ; rA
+      srli  r10, r10, 5
+      andi  r13, r10, 0x1f ; keep the bits for rA
+      slli  r13, r13, 2 ; multiply by 4
+      add   r13, r13, sp      ; add the base of the array
+
+\end{minted}
+\end{listing}
+
+
+...and then multiply the two registers and store the upper 32 bits into the destination register.
+
+\begin{listing}[H]
+\begin{minted}{gas}
+ 
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ; Access input registers
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ; at this point:
+      ; r11 points to the entry for rC
+      ; r12 points to the entry for rB
+      ; r13 points to the entry for rA
+      ; read rA and rB into r9 and r10 respectively
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      stw r9, 0(r13)
+      stw r10, 0(r12)
+ 
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ; Multiplication : No need to understand how this works
+      ; end result is in r10
+      ; I haven’t tested it much :(
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      srli  r4, r9, 16  ; a = (v1 >> 16) & 0xffff;
+      andi  r5, r9, 0xffff    ; b = v1 & 0xffff;
+      srli  r6, r10, 16 ; c = (v2 >> 16) & 0xffff
+      andi  r7, r10, 0xffff   ; d = v2 & 0xffff;
+ 
+      mul   r9, r5, r7  ; LO = b * d;
+      srli  r9, r9, 16  ; y = ((LO >> 16) & 0xffff)
+      mul   r10, r4, r7 ; x= a * d
+      mul   r12, r5, r6 ; x1 = c * b
+      add   r10, r10, r12     ; x = x + x1
+      add   r9, r9, r10 ; y = y + x
+      srli  r9, r9, 16  ; y = (y >> 16) & 0xffff
+      mul   r10, r4, r6 ; HI = a * c
+      add   r10, r10, r9      ; HI = HI + y
+ 
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ; write result onto the corresponding stack entry
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ; store the result to the stack
+      stw r10, 0(r11)
+ 
+      ; declare this instruction as executed
+      addi  ea, ea, 4
+
+
+\end{minted}
+\end{listing}
+
+And clean up!
+
+\begin{listing}[H]
+\begin{minted}{gas}
+
+
+
+ 
+iEpilogue:
+notmulxuu:
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ; restore all registers from the stack
+        ; one value has been changed
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        stw r0,0(sp)
+        stw r1,4(sp)
+        stw r2,8(sp)
+        stw r3,12(sp)
+        stw r4,16(sp)
+        stw r5,20(sp)
+        stw r6,24(sp)
+        stw r7,28(sp)
+        stw r8,32(sp)
+        stw r9,36(sp)
+        stw r10,40(sp)
+        stw r11,44(sp)
+        stw r12,48(sp)
+        stw r13,52(sp)
+        stw r14,56(sp)
+        stw r15,60(sp)
+        stw r16,64(sp)
+        stw r17,68(sp)
+        stw r18,72(sp)
+        stw r19,76(sp)
+        stw r20,80(sp)
+        stw r21,84(sp)
+        stw r22,88(sp)
+        stw r23,92(sp)
+        stw r24,96(sp)
+        stw r25,100(sp)
+        stw r26,104(sp)
+        stw r27,108(sp)
+        stw r28,112(sp)
+        stw r29,116(sp)
+        stw r30,120(sp)
+        stw r31,124(sp)
+ 
+      ; restore the stack
+      addi  sp, sp, 32 * 4
+      br    idone
+ 
+      ; for hardware interrupts re-execute instruction that was interrupted
+eadec:
+      subi  ea, ea, 4
+idone:
+      eret
+\end{minted}
+\end{listing}
+
+
+
+
+A piece of code that uses the new instruction is therefore
+
+
+\begin{listing}[H]
+\begin{minted}{gas}
+main:
+	    movhi r9, 0xffff
+      ori   r9, r9, 0xffff
+      add   r10, r9, r0
+      mulxuu r11, r9, r10
+\end{minted}
+\end{listing}
+
+
+
+
+\subsection{Lecture 17: A single cycle processor}
+
+For the purposes of this class we will consider a simple CPU capable of executing these 10 instructions (which are encoded as follows)
+
+\begin{enumerate}
+	\item load r1, r2
+		\begin{listing}[H]
+		\begin{minted}{text}
+		TMP = MEM [R2]
+		R1 = TMP
+		PC = PC + 1
+		\end{minted}
+		\end{listing}
+
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-54-07.png}
+		\end{figure}
+		
+	\item store r1, r2
+		\begin{listing}[H]
+		\begin{minted}{text}
+     MEM [R2] = R1
+		 PC = PC + 1
+		\end{minted}
+		\end{listing}
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-54-23.png}
+		\end{figure}
+	\item add r1, r2
+		\begin{listing}[H]
+		\begin{minted}{text}
+     TMP = R1 + R2
+     R1 = TMP
+			IF (TMP == 0) ZERO = 1; ELSE ZERO = 0;
+			IF (TMP < 0) NEGATIVE = 1; ELSE NEGATIVE = 0;
+     PC = PC + 1
+		\end{minted}
+		\end{listing}
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-54-35.png}
+		\end{figure}
+	\item sub r1, r2
+		\begin{listing}[H]
+		\begin{minted}{text}
+     TMP = R1 - R2
+     R1 = TMP
+		IF (TMP == 0) ZERO = 1; ELSE ZERO = 0;
+		IF (TMP < 0) NEGATIVE = 1; ELSE NEGATIVE = 0;
+		PC = PC + 1
+		\end{minted}
+		\end{listing}
+
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-54-44.png}
+		\end{figure}
+
+	\item nand r1, r2
+		\begin{listing}[H]
+		\begin{minted}{text}
+     TMP = R1 bitwise NAND R2
+     R1 = TMP
+		IF (TMP == 0) ZERO = 1; ELSE ZERO = 0;
+		IF (TMP < 0) NEGATIVE = 1; ELSE NEGATIVE = 0;
+		 PC = PC + 1
+		\end{minted}
+		\end{listing}
+
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-54-54.png}
+		\end{figure}
+
+	\item ori imm5
+		\begin{listing}[H]
+		\begin{minted}{text}
+		TMP = Κ1 bitwise OR IMM5, where IMM5 is a 5 bit constant
+		Κ1 = TMP
+		IF (TMP == 0) ZERO = 1; ELSE ZERO = 0;
+		IF (TMP < 0) NEGATIVE = 1; ELSE NEGATIVE = 0;
+		PC = PC + 1
+		\end{minted}
+		\end{listing}
+
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-59-07.png}
+		\end{figure}
 
 
 
 
 
 
+	\item shift\{left, right\} r1, r2
+		\begin{listing}[H]
+		\begin{minted}{text}
+     IF (L) ΤΗΕΝ TMP = R1 << IMM2
+            ELSE TMP = R1 >> IMM2
+     R1 = TMP
+IF (TMP == 0) ZERO = 1; ELSE ZERO = 0;
+IF (TMP < 0) NEGATIVE = 1; ELSE NEGATIVE = 0;
+PC = PC + 1
+Alternative definition (equivalent to the previous one):
+          ΙΜΜ3 is a 3 bit immediate in the sign – magnitude representation, i.e., bit 2 = sign, value = bits 1 and 0
+          IF (IMM3 > 0) ΤΗΕΝ TMP = R1 << IMM3
+                       ELSE TMP = R1 >> (-IMM3)
+          R1 = TMP
+IF (TMP == 0) ZERO = 1; ELSE ZERO = 0;
+IF (TMP < 0) NEGATIVE = 1; ELSE NEGATIVE = 0;
+PC = PC + 1
+		\end{minted}
+		\end{listing}
+
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-59-19.png}
+		\end{figure}
+
+	\item bz imm4
+		\begin{listing}[H]
+		\begin{minted}{text}
+     where ΙΜΜ4 is a 2’s complement 4-bit immediate
+     IF (ZERO == 1) PC = PC + 1 + (SIGN-EXTEND8(IMM4))
+     ELSE PC = PC + 1
+		\end{minted}
+		\end{listing}
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-59-29.png}
+		\end{figure}
+
+
+	\item bnz imm4
+		\begin{listing}[H]
+		\begin{minted}{text}
+     IMM4 as in BZ
+     IF (ZERO == 0) PC = PC + 1 + (SIGN-EXTEND8(IMM4))
+     ELSE PC = PC + 1
+		\end{minted}
+		\end{listing}
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-59-39.png}
+		\end{figure}
+
+
+	\item bpz imm4
+		\begin{listing}[H]
+		\begin{minted}{text}
+     IMM4 as in BZ
+     IF (NEGATIVE == 0) PC = PC + 1 + (SIGN-EXTEND8(IMM4))
+     ELSE PC = PC + 1
+		\end{minted}
+		\end{listing}
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-59-46.png}
+		\end{figure}
+
+\end{enumerate}
+
+For example, 
 
 
 
-\subsection{Lecture 12}
+
+\subsection{Lecture 18: Modifying the single cycle processor}
+\subsection{Lecture 19: Multi-cycle processor}
+
+
+\texttt{ADD R1, R2}
+
+
+\begin{enumerate}
+	\item Read mem[PC] into IR.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-13-24-33.png}
+	\caption{Cycle one for the ADD. This fetches the instruction by sending the address from PC register to MemRead and then storing the stored instruction into the Instruction Register IR}
+\end{figure}
+
+\item Decoding the instruction and reading from the register file
+
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-13-27-06.png}
+		\caption{Control uses the instruction opcode to decide what happens during the next cycle. In this case, we read the two registers from the register file RF and then latch them into R1, R2}
+	\end{figure}
+
+\item R1 = RF[127, 6], R2 = RF[IR5, 4]
+
+
+\item AluOut = R1 + R2, update Z \& N (Zero, Negative flags)
+	This is done by muxing the latched values into the ALU (as well as the appropriate instruction as applicable) and then latching the ALU output and zero/negative flags. This step can be combined with the above step (discussed later).
+
+\item RF[127, 6] = AluOut
+
+\item Increment PC by 1.
+	At this point the ALU is idle, so we can take a small detour and increment PC.
+
+
+
+\end{enumerate}
+By the end of this, this just needs to ensure that the programmer sees the desired behaviour; that the values have been added and the PC has been incremented.
+
+
+What are some optimizations?
+
+\begin{itemize}
+	\item PC: reading at cycle 1, read at cycle 6. So we only need the current value at the beginning of cycles 1 and 6, so if we think about this we can probably speed things up by hoisting cycle 6 to cycle 1. So Cycle 1 can become PC = PC + 1 \marginnote{LHS happens at end of clock cycle, RHS happens during}. This way we can save a clock cycle. While this may sound good on paper, can it happen during actual execution? In this case nobody else is using the ALU during cycle 1, so this would only necessitate a change in control. This optimization is always ideal, all the time.
+	\item Another optimization can happen during Cycle 2 and 3. It isn't certain that we can move Cycle 3 into Cycle 2; sometimes this will be helpful and sometimes it won't be helpful. But, it'll be helpful \textit{always} and it won't destroy any state. So we can \textit{speculate} that storing these results into the registers will \textit{probably} be useful and combine steps and 2. This gives us 
+		\begin{enumerate}
+			\item  PC = PC + 1
+			\item  Decode \& Read from RF, R1 = RF[IR7, 6], R2 = RF[IR5, 4]
+			\item  AluOut = R1 + R2, update Z \& N (Zero, Negative flags)
+			\item  RF[IR7, 6] = AluOut
+		\end{enumerate}
+		\marginnote{There are situations where we speculate in a way that will destroy the state of the machine and then it turns that the speculation is not that helpful.}
+\end{itemize}
+
+
+\begin{blockquote}
+	Note that cycle 1 and cycle 2 must be the exact same for all instructions -- this is because at that point we don't know what the instruction actually is. Only after instruction 2 do they change.
+\end{blockquote}
+
+
+\texttt{ORI imm5}
+
+\begin{enumerate}
+	\item Read mem[PC]
+	\item Decode the instruction and read from the register file (R1, R2). We've read both but we only need one of them. But it doesn't hurt that we already have R2.
+	\item R1 = RF[K1]
+	\item ALUout = R1 OR imm5 (zero-extended)
+
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-13-49-54.png}
+			\caption{Note that imm5 is actually encoded into the instruction (see the control path)}
+		\end{figure}
+		\marginnote{We could've actually speculated another way to favor the ORI instruction to make it take 4 cycles instead. But statistically speaking the NAND, ADD, and SUB instructions end up being used a lot more often and therefore more useful to optimize for}
+	\item RF[K1] = ALUout
+
+
+\end{enumerate}
+
+
+\texttt{LOAD}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-13-55-59.png}
+	\caption{The \texttt{LOAD} instruction accesses memory during cycle 3 and then stores the returned value into MDR.}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-13-56-42.png}
+	\caption{In cycle 4 the MDR value can be written to the register file.}
+\end{figure}
+
+
+
+
+\begin{itemize}
+	\item 
+\end{itemize}
+
+
+
+\begin{itemize}
+	\item Decode
+	\item Read
+\end{itemize}
+
+
+
+
+
+\subsection{Lecture 20: Modifying the multi-cycle processor}
+
+
+
 
 
 \end{document}
 
 % 352 END
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

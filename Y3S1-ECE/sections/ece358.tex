@@ -597,7 +597,7 @@ So the complexity is $ O(N\log N) $
 
 	\begin{enumerate}
 		\item If $ f(n) = O(n^{\log_ba - \varepsilon}) $ for some $ \varepsilon > 0 $, then $ T(n) = \Theta(n^{log_ba}) $ 
-		\item If $ f(n) = \Theta(n^{\log_ba }) $ for some $ \varepsilon>0 $, then $ T(n) = \Theta(n^{log_ba}\log n) $ 
+		\item If $ f(n) = \Theta(n^{\log_ba }) $, then $ T(n) = \Theta(n^{log_ba}\log n) $ 
 		\item If $ f(n) = \Omega(n^{\log_ba + \varepsilon}) $ for some $ \varepsilon>0 $ and $ af(\frac{n}{b}) \le  c f(n) $ for some $ c < 1$, then then $ T(n) = \Theta(f(n)) $ 
 	\end{enumerate}
 \end{definition}
@@ -846,11 +846,26 @@ MAXHEAPIFY(A, i)
 	if l <=A.size and A[l] > A[i]
 		largest = l
 	else largest = i
-
+	if r <= A.size and A[r] > A[largest]
+		largest = r
+	if largest != i
+		swap A[i], A[largest]
+		MAXHEAPIFY(A, largest)
 \end{minted}
 \end{listing}
 
 
+The child sub-trees can have size of at most $ \frac{2n}{3} $ and so we can describe MAXHEAPIFY by the recurrence relation
+
+\begin{equation}
+	T(n) = \le  T(\frac{2n}{3}) + \Theta(1)
+\end{equation}
+
+
+
+
+
+This heapify operation can then be used to build a max heap from an array by calling heapify on all nodes that are not leaves. This is done by starting at the last node that has children and calling heapify on it. This is repeated until the root is reached. It can likewise be used to sort an array.
 
 
 
@@ -866,10 +881,61 @@ for i = A.length -> 2,
 
 
 
+\subsection{Placeholder for Quick, counting, selection, and radix sort}
 
-\subsection{Lecture 10, 11: Quicksort}
-\subsection{Lecture 12: lower bound, counting and radix sort}
-\subsection{Lecture 13: Select \& BST}
+I'm going to skip these since these are fairly trivial and easily found online. I also didn't go to class.
+
+\subsection{BSTs}
+
+
+\subsection{Amortized Analysis}
+\begin{definition}
+
+	\begin{itemize}
+		\item \textbf{Average cost}: mean across all inputs
+
+			\begin{equation}
+				\frac{1}{T-0} \int_{0}^{T} c(x) dx 
+			\end{equation}
+			
+		\item \textbf{Expected cost}: expectation over all inputs w.r.t a probability distribution
+
+			\begin{equation}
+				\int_{0}^{T}   p(x) c(d) dx
+			\end{equation}
+			
+		\item \textbf{Amortized Cost}: average cost over a \textit{sequence} of operations
+
+			\begin{equation}
+				\frac{1}{n} \sum_{i=1}^{n} c(\frac{1}{n})
+			\end{equation}
+	\end{itemize}
+
+\end{definition}
+
+The aggregate analysis method is simple and is as follows
+
+\begin{enumerate}
+	\item Given a function or operation $ f(x) $ and a sequence $ \left\{ x_1, x_2, \ldots x_n \right\}  $
+	\item Determine the total cost of the sequence $ \sum_{i=1}^{n} c(x_i) \equiv T(n) $
+	\item The amortized cost is $ \frac{T(n)}{n} $
+\end{enumerate}
+
+The complicated but more powerful way to deal with this is the accounting method.
+
+
+\begin{enumerate}
+	\item Declare a cost $ \hat{c} $ for each operation/function call
+	\item Describe a procedure for how the cost will be allocated
+	\item Assert a credit invariant, i.e. that the credit in an object must be greater than or equal to 0
+	\item Prove the credit invariant
+	\item Using the credit invariant argue why the credit never goes negative
+	\item The amortized cost is $ O(\hat{c}) $
+\end{enumerate}
+
+
+
+\subsection{Skewed Heaps}
 
 
 

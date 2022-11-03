@@ -627,8 +627,230 @@ For notational convenience the $ \tau $ subscript can be dropped and generalizin
 Symbolically the convolution is represented $ y(t) = x(t) \cdot h(t)$ 
 
 
+\subsection{Lecture 12}
+A class of LTI systems that are really important are ones related through linear constant-coefficient differential equations.
+For example, consider
+
+\begin{equation}
+	\frac{dy(t)}{dt} + 2 y(t) = x(t)
+	\label{eq:355:l12_1}
+\end{equation}
+
+This equation offers an implicit specification of the system, i.e. a relationship between input and output instead of an explicit expression; to find a explicit expression we must plug in initial conditions.
 
 
-\subsection{Lecture 8}
+Given the exponential input 
+
+\begin{equation}
+	x(t) = K e^{3t} u(T)
+\end{equation}
+
+to  \eqref{eq:355:l12_1}, the complete solution to a differential equation of this type is given as the sum of a particular and homogeneous solution\sn{Recall ESC195}
+
+\begin{equation}
+	y(t) = y_p(t) + y_h(t)
+\end{equation}
+
+
+A common method for finding the particular solution is to first look for the \textit{forced response}; an output signal with the same form as the input.
+
+Take 
+
+\begin{equation}
+	y_p(t) = Ye^{3t}
+\end{equation}
+
+and then doing some math we find $ Y = \frac{K}{5} $ to arise at $ y_p(t) = \frac{K}{5}e^{3t}, t > 0 $.
+
+To find the homogeneous solution we hypothesize a solution of form
+
+\begin{equation}
+	y_h(t) = Ae^{st}
+\end{equation}
+
+and then substitute into the differential equation to find
+
+\begin{equation}
+	y(t) = Ae^{-2t} + \frac{K}{5} e^{3t}, \qquad t > 0
+\end{equation}
+
+The constants $ A, K$ can then be found by substituting in the initial conditions.
+
+
+
+More generally speaking, a $ N $th order linear constant-coefficient differential equation is given by
+
+\begin{equation}
+	\sum^N_{k=0} a_k \frac{d^k y(t)}{dt^k} = \sum^{M}_{k=0} b_k \frac{d^k x(t)}{dt^k}
+\end{equation}
+
+
+The discrete time counterpart is
+
+\begin{equation}
+	\sum_{k=0}^{N} a_k y[n-k] = \sum_{k=0}^{M} b_k x[n-k]
+\end{equation}
+
+With the solution $ y[n] $ being the sum of the particular solution to the problem above and a solution to the homogeneous equation
+
+\begin{equation}
+	\sum_{k=0}^{N} a_k y[n-k] = 0
+\end{equation}
+
+
+
+A important special case of LCCDEs are LTIs.
+
+Consider a response to an arbitrary exponential input signal
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-11-02-16-16-38.png}
+\end{figure}
+
+
+\begin{definition}
+	\textbf{Laplace transform of $ h $}, or the transfer function of LTI systems
+\begin{equation}
+	y(t) = \int_{-\infty}^{\infty}  h(\tau) e^{-s\tau} d \tau = \int_{0}^{1}  e^{-s\tau}d\tau = \begin{cases}
+		\frac{1}{s} (1-e^{-s}) & s \neq  0\\
+		1 & s = 0
+	\end{cases} 
+\end{equation}
+
+
+
+	
+\end{definition}
+
+\begin{theorem}
+	If $ x(t) = e^{st} $ and $ H_s $ exists, $ y(t) = H(s) e^st $
+
+	This can be interpreted in two ways
+
+	\begin{enumerate}
+		\item Same constant exponential as input	$e^{st} $ (eigenfunction of LTI system)
+		\item Scaled by constant $ H(s) $ (eigenvalue)
+	\end{enumerate}
+
+	\textbf{Corollary} 
+
+	If the input to an LTI system with an impulse response $ h(t) $ is 
+	\begin{equation}
+		x(t) = \sum_k a_k e ^{s_kt}
+	\end{equation}
+	
+		then it's output is given by
+
+		\begin{equation}
+			y(t) = \sum_k a_k H_{s_k} e^{s_kt}
+		\end{equation}
+		
+
+\end{theorem}
+
+Since almost all periodic signals can be expressed as a sum of harmonically related complex exponentials, i.e.
+
+
+\begin{equation}
+	x(t) = 
+	\sum_{k=-\infty}^{\infty} a_k e^{j k\omega_ t } = 
+	\sum_{k=-\infty}^{\infty} a_k e^{j \frac{2\overline{n}k}{T}t}
+\end{equation}
+
+Where the $ k $ denotes the $ |k| $th harmonic component and $ a_0 $ being the constant component\sn{In circuit analysis this is the constant component}
+
+
+
+
+\subsection{Lecture 15: Which periodic signals have a Fourier representation?}
+
+
+We have the following expressions for synthesis and analysis, respectively
+
+\begin{equation}
+	x(t) = \sum_{k=-\infty}^{\infty} a_k e^{k j \omega_ t }
+\end{equation}
+
+\begin{equation}
+	a_k = \frac{1}{T} \int_T x(t) e^{-k j \omega_ t } dt
+\end{equation}
+
+
+
+
+
+\subsection{Fourier series representation of continuous periodic systems}
+
+
+
+\begin{equation}
+	x(t) = \cos \omega_o t \Leftrightarrow e^{j\omega_o t}
+\end{equation}
+
+Both of the signals are periodic with fundamental frequency $ \omega_o $ with associated harmonically related complex exponentials
+
+
+\begin{equation}
+	\Phi_k(t) = e^{j k\omega_o t }, \qquad k = 0, \pm 1, \pm 2
+\end{equation}
+
+
+
+
+
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-11-02-16-50-54.png}
+	\caption{a pretty good table}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \end{document}

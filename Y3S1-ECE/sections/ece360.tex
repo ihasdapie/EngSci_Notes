@@ -612,8 +612,8 @@ We will also have to account for the voltage of the diode, so
 
 \subsection{Lecture 9}
 
-I missed this lecture, so here are my handwritten catchup notes
 \begin{fullpage}
+	I missed this lecture, so here are my handwritten catchup notes
 	\begin{figure}[H]
 		\centering
 		\includegraphics[width=\linewidth]{img/image_2022-09-29-16-36-40.png}
@@ -632,4 +632,318 @@ I missed this lecture, so here are my handwritten catchup notes
 	\includegraphics[width=\linewidth]{img/image_2022-09-29-16-34-15.png}
 \end{figure}
 \end{fullpage}
+
+\subsection{Lecture 10}
+
+The most commonly used semiconductor in electronics is silicon.
+At an molecular level silicon crystals are linked together via covalent bonds which spontaneously break and reform.
+This process allows electrons to wander away from its parent and therefore become available to conduct electricity
+The process of electrons filling some of these holes is called recombination and the process of electrons leaving the crystal to form holes is called generation. At thermal equilibrium the recombination rate is equal to the generation rate and therefore the concentration of free electrons $ n $ is equal to that of the holes $ p $ , i.e 
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-19-14-32-35.png}
+\end{figure}
+
+\begin{equation}
+	n = p = n_i
+\end{equation}
+
+Where $ n_i $ denotes the number of free electrons in a unit volume of silicon at a given temperature.
+
+\begin{theorem}
+	The number of free electrons and holes in a unit volume ($ cm^3 $ ) of silicon at a given temperature $ T $ is given by
+
+	\begin{equation}
+		n_i = BT^{3\over2} e^{-E_g \over {2kT}}
+	\end{equation}
+
+	Where $ k $ is the Boltzmann constant, $ B $ is a material-dependent parameter that is $ 7.3 \cdot  10^{15} cm^{-3}K^{-3 \over 2}$ for silicon, $ T $ is the temperature in kelvin, and $ E_g = 1.12eV $ is the bandgap energy or the minimum energy required to break a covalent bond and create an electron-hole pair
+\end{theorem}
+
+
+The intrinsic silicon crystal does not have sufficient amounts of free electrons and holes to be appreciably conductive at room temperature, plus their conductivity varies strongly with temperature.
+\textbf{Doping}, or introducing impurities into silicon, can be used to increase the number of free electrons and holes in the crystal.
+To increase the concentration of free electrons, $ n $ Silicon is commonly doped with an element with 5 valence electrons such as phosphorous.
+Likewise, to increase the concentration of free holes, $ p $ Silicon is commonly doped with an element with 3 valence electrons such as boron.
+
+
+\begin{theorem}
+
+	For $ n $ type silicon, the concentration of free electrons is given by
+	\begin{equation}
+		p_n n_n = n_i^2 \Leftrightarrow p_n \approx \frac{n_i^2}{N_P}
+	\end{equation}
+	
+	For $ p $ type silicon, the concentration of free electrons is given by
+	\begin{equation}
+		p_p n_p = n_i^2 \Leftrightarrow p_p \approx \frac{n_i^2}{N_A}
+	\end{equation}
+\end{theorem}
+
+Note that pieces of $ n $ or $ p $ doped silicon are electronically neutral; the charge of the majority free carriers (electrons in n, holes in p) are neutralized by the bound charges of the impurity atoms.
+
+
+
+There are two distinct ways that current can flow in semiconductors; drift and diffusion.
+\textbf{Drift current} is is the movement of free electrons or holes in response to an electric field; holes are accelerated in the direction of $ E $ and free electrons opposite.
+Holes acquire a velocity of $ v_{p-drift}  = \mu_p E $, with $ \mu_p $ being a constant\sn{$ \mu_p = 480cm^2 / V \cdot  s $  for intrinsic silicon}. If we were to consider a cross section of a silicon bar with a field applied across it, the hole component of the direct current (and current density) flowing through the bar would be 
+
+\begin{equation}
+	I_{s,p}  = A qpv_{p-drift}  = Aqp\mu_p E \Rightarrow J_p = qp\mu_p E
+\end{equation}
+
+The current due to free electrons is found similarly and can be used to find the total drift current density
+
+
+\begin{equation}
+	I_{s,n}  = -Aqnv_{n-drift}  \Rightarrow J_{s,n} = qn\mu_n E
+\end{equation}
+
+
+\begin{equation}
+	J_S = J_{s,p}  + J_{s,n} = q(p\mu_o + n \mu_n) E = \frac{E}{\rho}
+	\label{eq:360:drift_current}
+\end{equation}
+
+Where resistivity $ \rho $ is given by
+
+\begin{equation}
+	\rho = \frac{1}{q(p\mu_p + n \mu_n)}
+\end{equation}
+
+
+We now observe that \eqref{eq:360:drift_current} is a variant of Ohm's law and can be written as
+
+\begin{equation}
+	\rho = \frac{E}{J}
+\end{equation}
+
+\textbf{Diffusion current} is the movement of holes and electrons from areas of high concentration to low concentration in response to a gradient inside the semiconductor\sn{Think of dropping ink into water}.
+
+The magnitude of the current at any point is proportional to the slope of the concentration gradient, i.e. for holes
+
+
+\begin{equation}
+	J_{D,p}  = -qD_p \frac{dp(s)}{dx}
+\end{equation}
+
+And for electrons
+
+
+\begin{equation}
+	J_{D,n}  = qD_n \frac{dp(s)}{dx}
+\end{equation}
+
+
+
+This brings us to our first example of a semiconductor device: the $ p-n $ junction diode.
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-19-19-47-03.png}
+\end{figure}
+
+Looking at a passive device without an applied voltage junction we note that free electrons from $ n $ side gets caught in the holes in the $ p $ type, leaving behind a positive charge and vice-versa causing a "depletion region" in the middle with an electric field without any holes or electrons.
+This causes a potential field and makes it such that work must be done to move charge from the anode to the cathode.
+
+
+
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-19-20-11-10.png}
+\end{figure}
+
+
+Reverse-biasing the diode causes an even greater potential inside the diode which causes the depletion region to grow and the electric field to increase, thereby prevent current from passing through.
+A forward bias would counteract the depletion region and therefore allow current to flow through the diode.
+Drift current\sn{recall: movement of carriers due to electric field, electrons drifting back to n region} dominates in the reverse bias region, while diffusion current dominates in the forward bias region.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-19-20-12-51.png}
+\end{figure}
+
+Skipping past the derivation, the expression for diode current is given by
+
+
+\begin{equation}
+	i_D = I_s (e^{v_D \over v_T} - 1)
+\end{equation}
+
+
+This is a result of the Boltzmann distribution and the derivation is given in some Feynman lecture or in the textbook.
+
+
+
+
+
+
+\subsection{Lecture 11: Introduction to transistors and MOSFETs}
+
+Transistors are essentially switches that can be turned on and off by applying a voltage, and are implemented in semiconductors by stacking another $ p $ or $ n $ layer onto a diode, i.e.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-20-00-21-48.png}
+	\caption{pnp vs npn transistor}
+\end{figure}
+
+
+
+
+
+There are two main types of transistors, MOSFET (metal-oxide semiconductor field-effect transistors) and BJT (bipolar junction transistor).
+MOSFETs have found more widespread use due to their simplicity of manufacture and their ability to be scaled down to smaller sizes.
+
+
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-20-00-24-31.png}
+	\caption{BJT transistors came first but are not commonly used now; they will be discussed later on in the course. Whereas BJTs directly make contact with the semiconductor, MOSFETs apply a field to induce a change in the device.}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/img_2022-10-16-something.png}
+	\caption{CMOS transitors}
+\end{figure}
+
+
+P transistors use holes as their primary charge carrier and allow current to pass if the base is negative with respect to the emitter\sn{For a PMOS this would be the application of a negative field}.
+Conversely, N transistors carry charge using electrons and allow current to pass if the base is positive with respect to the emitter\sn{For a NMOS this would be the application of a positive field}
+
+
+
+\begin{definition}
+	\textbf{ Cut-off region }
+
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{img/image_2022-10-20-00-47-55.png}
+	\end{figure}
+
+	There is no charge if the gate voltage is the same as the source. At some point, the threshold voltage, there will be enough voltage to form a "n-channel"\mn{again, for a n-type} through which electrons may pass.
+
+\end{definition}
+
+\subsection{Lecture 12: MOSFET Operating Regions}
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-20-01-03-08.png}
+	\caption{Labelled NMOS. The drain current can be thought of as the output.}
+\end{figure}
+
+There are three MOSFET operation regions; cut-off, triode, and saturation.
+Regions can be identified by inspecting the various voltages in the device.
+
+
+\textbf{Channel Inversion}  
+\begin{itemize}
+	\item 
+\end{itemize}
+
+\marginnote{$ V_t $ is the threshold voltage. Note that since this is a symmetrical device, we can compare $ V_{GS}  $ and $ V_{GD}  $ w.r.t the source and drain}
+\begin{table}[ht]
+	\centering
+	\caption{Channel inversion in operation regions}
+	\begin{tabular}{|c|c|c|} 
+		\hline
+		region & source & drain \\ \hline
+		cut-off & No, $ V_{GS}  < V_t $  & No $ V_{GD}  < V_t $  \\ \hline
+		triode & Yes, $ V_{GS} > V_t  $  & Yes, $ V_{GD } > V_t $  \\ \hline
+		saturation & Yes, $ V_{GS} > v_t $ & No (pinched off) $ V_{DS} > V_{OD} $ or $ V_{GD < V_t} $ \\ \hline
+	\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-20-01-15-19.png}
+	\caption{The $ n $-channel will thin out as the drain voltage goes up; at some point we will hit a drain voltage equal to the threshold voltage and cause the channel to disappear}
+\end{figure}
+
+When the drain voltage is equal to the threshold voltage, the overdrive voltage is equal to the $ V_{DS} $ This is the boundary between the triode and saturation region.
+
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-20-01-04-58.png}
+\end{figure}
+
+
+\begin{remark}
+	For a NMOS the source is the terminal at the lower voltage and the drain is the terminal at the higher voltage. For a PMOS it is the opposite, i.e. the source is at higher voltage.
+	It is conceivable that the source and drain could be swapped during operation.
+\end{remark}
+
+
+
+
+
+
+\begin{fullpage}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-10-20-00-57-53.png}
+\end{figure}
+\end{fullpage}
+
+\subsection{Lecture 13: MOSFET current-voltage characteristics}
+
+The TLDR of this lecture is that the current through a MOSFET is given by those fancy big equations.
+A cool consequence of the MOSFET is that it acts like a variable resistor in the triode region.
+
+
+
+
 \end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
