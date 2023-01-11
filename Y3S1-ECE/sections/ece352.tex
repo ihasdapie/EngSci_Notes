@@ -15,7 +15,12 @@
 
 \begin{itemize}
 	\item Lecture recordings on \href{https://tinyurl.com/2jthyk8k}{YouTube}
-	\item Online notes: \href{https://www.eecg.utoronto.ca/~moshovos/ECE352-2022}{https://www.eecg.utoronto.ca/~moshovos/ECE352-2022/}
+	\item Online notes: \href{https://www.eecg.utoronto.ca/~moshovos/ECE352-2022}{https://www.eecg.utoronto.ca/~moshovos/ECE352-2022/}. I "stole" a lot of figures from here but I think Prof. Moshovos is cool with it.
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.8\linewidth]{img/image_2022-12-10-15-41-25.png}
+			\caption{Excerpt from online course notes}
+		\end{figure}
 	\item Course will cover the following:
 	 \begin{itemize}
 	 	\item C to assembly
@@ -2022,6 +2027,33 @@ We can possibly observe the sequence $ 10, 11, 10, 9$, and so forth because of a
 This is because NIOS II does not implement atomic operations, therefore the same value can be loaded a register for two operations that change it without coordinating between the two programs, and therefore cause undesirable behaviour.
 Other architectures may implement atomic operations, which are operations that cannot be by another instruction (usually at the expense of performance).
 
+\subsubsection{Buffer Overflow Stack Attacks}
+
+Consider the following \texttt{c} method which takes a \texttt{char*} input over the network
+
+
+\begin{listing}[H]
+\begin{minted}{c}
+void packet_parse_string(char* packet){
+	char buffer[100];
+	// some code
+	// copy packet (null-terminated string) into buffer
+	while (packet[i]){
+		buff[j++] = packet[i++];
+	}
+	// some other code
+}
+\end{minted}
+\end{listing}
+
+One may immediately notice that there is no check to see if the packet is larger than 100 bytes, and therefore the buffer may overflow.
+Though this may seem like an innocuous invalid write, this function can be exploited to run arbitrary code.
+From this course we know that when returning it will try to restore \texttt{RA} from the stack, perform \texttt{RET}, and start executing code from \texttt{PC=RA}.
+This means that if the malicious caller can identify where the top of the stack was when calling, they may change the value of \texttt{RA} via the buffer overflow to the address of \texttt{buffer} and therefore execute arbitrary code that they sent inside of \texttt{packet}.
+
+
+Ways to defend against such attacks include writing non-sloppy code or forbidding execution of code on the stack\mn{though there are valid reasons for doing this at times, i.e. JIT compilation.}
+
 
 \subsection{Lecture 16: Emulating instructions in software}
 
@@ -2031,6 +2063,9 @@ They can also be used to emulate an instruction in software.
 For example, on the NIOSII there is a \texttt{mulxuu rC, rA, rB} instruction to multiply two 32 bit registers and then store the upper 32 bits of the result into a rC.
 Some NIOSII implementations may include a hardware unit which implements this instruction, but others may rely on emulation to execute this instruction instead.
 Likewise, the 80386 processor does not have a hardware unit to implement floating point instructions (but one could do them in hardware with the 80387 co-processor). If one did not have the 80387 they can use interrupts to emulate the instruction in software instead (though slower)
+
+
+
 
 \begin{figure}[H]
 	\centering
@@ -2301,7 +2336,7 @@ main:
 For the purposes of this class we will consider a simple CPU capable of executing these 10 instructions (which are encoded as follows)
 
 \begin{enumerate}
-	\item load r1, r2
+	\item \textbf{\texttt{load r1, r2}}
 		\begin{listing}[H]
 		\begin{minted}{text}
 		TMP = MEM [R2]
@@ -2315,7 +2350,7 @@ For the purposes of this class we will consider a simple CPU capable of executin
 			\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-54-07.png}
 		\end{figure}
 		
-	\item store r1, r2
+	\item \textbf{\texttt{store r1, r2}}
 		\begin{listing}[H]
 		\begin{minted}{text}
      MEM [R2] = R1
@@ -2326,7 +2361,7 @@ For the purposes of this class we will consider a simple CPU capable of executin
 			\centering
 			\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-54-23.png}
 		\end{figure}
-	\item add r1, r2
+	\item \textbf{\texttt{add r1, r2}}
 		\begin{listing}[H]
 		\begin{minted}{text}
      TMP = R1 + R2
@@ -2340,7 +2375,8 @@ For the purposes of this class we will consider a simple CPU capable of executin
 			\centering
 			\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-54-35.png}
 		\end{figure}
-	\item sub r1, r2
+
+	\item \textbf{\texttt{sub r1, r2}}
 		\begin{listing}[H]
 		\begin{minted}{text}
      TMP = R1 - R2
@@ -2356,7 +2392,7 @@ For the purposes of this class we will consider a simple CPU capable of executin
 			\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-54-44.png}
 		\end{figure}
 
-	\item nand r1, r2
+	\item \textbf{\texttt{nand r1, r2}}
 		\begin{listing}[H]
 		\begin{minted}{text}
      TMP = R1 bitwise NAND R2
@@ -2372,11 +2408,11 @@ For the purposes of this class we will consider a simple CPU capable of executin
 			\includegraphics[width=0.8\linewidth]{img/image_2022-11-03-14-54-54.png}
 		\end{figure}
 
-	\item ori imm5
+	\item \textbf{\texttt{ori imm5}}
 		\begin{listing}[H]
 		\begin{minted}{text}
-		TMP = Κ1 bitwise OR IMM5, where IMM5 is a 5 bit constant
-		Κ1 = TMP
+		TMP = K1 bitwise OR IMM5, where IMM5 is a 5 bit constant
+		K1 = TMP
 		IF (TMP == 0) ZERO = 1; ELSE ZERO = 0;
 		IF (TMP < 0) NEGATIVE = 1; ELSE NEGATIVE = 0;
 		PC = PC + 1
@@ -2393,18 +2429,18 @@ For the purposes of this class we will consider a simple CPU capable of executin
 
 
 
-	\item shift\{left, right\} r1, r2
+	\item \textbf{\texttt{shift\{left, right\} r1, r2}}
 		\begin{listing}[H]
 		\begin{minted}{text}
-     IF (L) ΤΗΕΝ TMP = R1 << IMM2
+     IF (L) THEN TMP = R1 << IMM2
             ELSE TMP = R1 >> IMM2
      R1 = TMP
 IF (TMP == 0) ZERO = 1; ELSE ZERO = 0;
 IF (TMP < 0) NEGATIVE = 1; ELSE NEGATIVE = 0;
 PC = PC + 1
 Alternative definition (equivalent to the previous one):
-          ΙΜΜ3 is a 3 bit immediate in the sign – magnitude representation, i.e., bit 2 = sign, value = bits 1 and 0
-          IF (IMM3 > 0) ΤΗΕΝ TMP = R1 << IMM3
+          IMM3 is a 3 bit immediate in the sign – magnitude representation, i.e., bit 2 = sign, value = bits 1 and 0
+          IF (IMM3 > 0) THEN TMP = R1 << IMM3
                        ELSE TMP = R1 >> (-IMM3)
           R1 = TMP
 IF (TMP == 0) ZERO = 1; ELSE ZERO = 0;
@@ -2421,7 +2457,7 @@ PC = PC + 1
 	\item bz imm4
 		\begin{listing}[H]
 		\begin{minted}{text}
-     where ΙΜΜ4 is a 2’s complement 4-bit immediate
+     where IMM4 is a 2’s complement 4-bit immediate
      IF (ZERO == 1) PC = PC + 1 + (SIGN-EXTEND8(IMM4))
      ELSE PC = PC + 1
 		\end{minted}
@@ -2446,7 +2482,7 @@ PC = PC + 1
 		\end{figure}
 
 
-	\item bpz imm4
+	\item \textbf{\texttt{bpz imm4}}
 		\begin{listing}[H]
 		\begin{minted}{text}
      IMM4 as in BZ
@@ -2461,7 +2497,126 @@ PC = PC + 1
 
 \end{enumerate}
 
-For example, 
+
+A CPU can be broken down into two units: the datapath and the control path. The data path is where all the data manipulation occurs; it should be capable of computing all results of the instruction execution.
+The control path orchestrates signals sent to the data path (by means of a giant FSM).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-12-10-15-35-41.png}
+	\caption{In the single-cycle processor each instruction will be executed entirely inside a single cycle. Code execution starts immediately after a falling edge and then all state changes will be complete right before the next falling edge.}
+\end{figure}
+
+CPU components include:
+
+\begin{definition}
+	Register
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{img/image_2022-12-10-15-37-08.png}
+		\caption{A collection of D flip-flops that can be read or written. Dataout gives values in the register, adding new values via datain. Write wire tells the register to latch onto the values in datain}
+	\end{figure}
+\end{definition}
+
+\begin{definition}
+	Mux
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{img/image_2022-12-10-15-38-14.png}
+		\caption{Multiplexes (Muxs) select a signal}
+	\end{figure}
+\end{definition}
+
+
+\begin{definition}
+	Register File
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{img/image_2022-12-10-15-38-48.png}
+		\caption{A register file contains a number of registers. Input signals to the register file cause it to output the data from the corresponding register to the data out lines. It also supports selecting and writing to a register by means of \texttt{regw} and \texttt{dataw}}. Note \texttt{write} signal as well.
+
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.8\linewidth]{img/image_2022-12-10-15-40-29.png}
+			\caption{A register file implementation}
+		\end{figure}
+	\end{figure}
+	
+\end{definition}
+
+\begin{definition}
+	ALU
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{img/image_2022-12-10-15-42-21.png}
+		\caption{An ALU takes two inputs and then performs an operation as determined by the ALUOp signal. In this generalized ALU block we have $ Z, N $ signals which indicate if output values are zero or negative. Simpler ALUs can be used at times if things such as only addition is necessary}
+	\end{figure}
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{img/image_2022-12-10-15-43-11.png}
+		\caption{Possible impl}
+	\end{figure}
+
+
+	The and/sub boxes are fairly trivial, and so or OR/ANDs. Shift is a little more interesting
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{img/image_2022-12-10-15-45-15.png}
+		\caption{Shift is muxed on a shift left and a shift right}
+	\end{figure}
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{img/image_2022-12-10-15-45-32.png}
+		\caption{Shift left is a ton of muxes}
+	\end{figure}
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{img/image_2022-12-10-15-45-43.png}
+		\caption{A shift by N is a series of shifts by 2. The barrel shifter takes advantage of this.}
+	\end{figure}
+\end{definition}
+
+Most modern processors use unified instruction and data memories. For the single-cycle processor we will use the \textit{Harvard Architecture} which uses separate instruction and data memories.
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-12-10-15-56-13.png}
+	\caption{Memory}
+\end{figure}
+
+Data memory is capable of reading and writing (whereas instruction memory is read-only). Generally speaking it takes an address and depending on the value of MemWrite or MemRead it will either update the value at the address with \texttt{Din} or present the value at \texttt{Dout}
+
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-12-10-15-58-01.png}
+	\caption{Recall: format of ADD instruction}
+\end{figure}
+
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-12-10-16-18-18.png}
+	\caption{Datapath for ADD}
+\end{figure}
+
+Notice that bits 7 and 8 of the instruction are being piped directly into \texttt{reg1} and \texttt{regw} since our instruction definition gives \texttt{reg1 = reg1 + reg2}. The adder attached to the PC register is used to increment PC after each cycle.
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-12-10-16-34-47.png}
+	\caption{Augmented datapath to support ORI}
+\end{figure}
+
+ORI takes an immediate value from the instruction.
 
 
 
@@ -2563,6 +2718,22 @@ What are some optimizations?
 \end{figure}
 
 
+\texttt{STORE}
+
+
+\begin{enumerate}
+	\item PC = PC+1; grab value \& +1 using ALU
+	\item Grab the two register values from the register file and latch them
+	\item 
+\end{enumerate}
+
+\texttt{BZ Imm4} 
+\begin{itemize}
+	\item Read mem[PC]
+	\item Decode
+	\item If (Z is true), PC = PC + 1 + SE(Imm4) \mn{SE denotes sign extend}
+	\item 
+\end{itemize}
 
 
 \begin{itemize}
@@ -2581,6 +2752,173 @@ What are some optimizations?
 
 
 \subsection{Lecture 20: Modifying the multi-cycle processor}
+
+
+
+\subsection{Caches}
+
+
+Caches are small and fast memories which contain a subset of the current contents of main memory.
+Modern processors usually include three levels of caches; L1, L2, and L3, with L1 being the fastest.
+Caches are also invisible to the ISA and the programmer with the exception of methods such as \texttt{ldwio}, \texttt{stwio}\mn{and \texttt{volatile} in \texttt{c}, etc, I guess}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{img/image_2022-11-24-13-17-16.png}
+	\caption{Cache and memory hierarchy}
+\end{figure}
+
+Caches exploit a common tendency of programs: spatial and temporal \textit{locality}; recently referenced items are likely to be referenced again soon and nearby elements tend to be referenced close together in time.
+
+For example, consider
+
+
+\begin{listing}[H]
+\begin{minted}{c}
+for (int i = 0; i < n; i++){
+	sum += A[i];
+}
+\end{minted}
+\end{listing}
+
+This snippet displays spatial locality in the data access of the array and temporal locality in that the body of the loop composes a sequence of instructions that will be fetched and executed repeatedly.
+By storing a subset of memory into spatially local \textit{blocks}, we can often reduce the amount of disk accesses by having a, well, cached copy available nearby.
+
+
+Typical processor implementations have separate L1 caches for instructions and data, and a single (larger) L2 cache that is shared between the two.
+
+Some keywords:
+
+
+\begin{itemize}
+	\item cache capacity: the number of bytes the cache can hold
+	\item placement: where the cache block should be placed
+	\item identification: how to find a block in the cache
+	\item cache hit: when the requested block is in the cache
+	\item hit rate: total number of hits / total number of accesses
+	\item cache miss: when the requested block is not in the cache
+	\item miss rate: total number of misses / total number of accesses
+	\item replacement: remove block to make room for new block
+	\item replacement strategy: how to choose which block to remove
+	\item write strategy: how to handle writes to the cache
+\end{itemize}
+
+
+Cache operation usually involves the following steps:
+
+\begin{enumerate}
+	\item CPU loads from addr A
+	\item If cache hit -> return value at A stored in cache [DONE]
+	\item If cache miss -> load block containing A into cache
+	\item Place block in cache, replacing another block if necessary
+	\item Return value at A stored in cache [DONE]
+\end{enumerate}
+
+
+
+
+
+
+
+Since cache is a subset of memory, we need to be able to identify which block of memory we're looking for.
+Cache lookups by convention break up the bits of a memory address into the \textit{tag, set index, and offset}. 
+
+\begin{itemize}
+	\item \textit{tag} ($ t $) : since multiple locations can map to each cache block, the tag is used to distinguish between them i.e. which memory location currently is cached
+	\item \textit{set index} ($ s $): how to locate a block in the cache: index into the array of sets containing blocks in the cache
+	\item \textit{offset} $ b $:  which byte within the block we're looking for
+\end{itemize}
+
+A \textit{valid bit} is also associated for every block in the cache since a $ 0x0 $ tag is a valid address.
+
+
+
+Tag: $ 2^{n_{rows}} \rightsquigarrow \text{tag} = 32-N$.
+Note that the number of ways does not have to be a power of 2. We can have a 3-way cache, etc.
+
+\subsubsection{Implementations}
+
+
+\begin{definition}
+	
+\textbf{Direct mapped cache}: each memory location maps to a single specific location in the cache.
+
+
+For a byte-addressable address space of $ 2^n $, then the size of a block is $ B = 2^b $ bytes, the number of sets $ S = 2^S $, and $ S $ is also equal to the total number of cache blocks in the cache; i.e. there is one block per set in cache. Capacity of a direct mapped cache is therefore $ B \cdot  S = 2^{b+s} $ bytes
+
+
+\begin{example}
+
+	\marginnote{Out of consideration of typing time, the full example will not be typed out and instead I defer the reader to find it \href{https://www.eecg.toronto.edu/~steffan/teaching/permanent/ece243/cache_lecture/}{here}.}
+
+
+	Consider a 16 bit address space with a direct-mapped cache with $ t = 8, s = 4, b = 4 $.
+	The capacity of this cache is $ 2^{s+b} = 256 $ bytes. The number of sets is $ 2^4 = 16 $ and the block size $ b = 2^4 = 16 $.
+
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{img/image_2022-11-24-13-50-47.png}
+		\caption{Initial cache state}
+	\end{figure}
+
+
+	\texttt{movia r8,0xface; ldb r8,0(r8) }
+
+	\begin{enumerate}
+		\item Break address \texttt{0xface} to \texttt{tag = 0xfa}, \texttt{set = 0xc}, \texttt{offset = 0xe}.
+		\item The set-index is used to index the cache (\texttt{0xc})
+		\item Check the valid bit if the block is valid. Initially this is invalid, so we will have a cache miss.
+		\item A request will be made to main memory to load the block containing the address \texttt{0xface}, i.e. the cache block that starts at $ 0xfac0 $ and contains 16 bytes of data between $ 0xfac0 \rightsquigarrow 0xfacf  $
+		\item Memory returns the block (after a delay) and the cache set at $ 0xc $ is updated with the new block; the contents are copied over, the valid bit set, and the tag is set equal to $ 0xfa $
+		\item Use the offset value $ 0xe $ t index into the cache block and return the requested block
+	\end{enumerate}
+
+
+	A cache hit occurs when the tag matches and the valid bit is set. A more interesting case is a cache miss involving an overwrite.
+
+	Consider 
+
+	
+
+
+
+
+
+
+	
+\end{example}
+
+\end{definition}
+
+
+
+
+
+
+\subsubsection{Handling Writes}
+
+What are ways to handle writes to the cache as to maximize performance i.e. minimize cache misses?
+
+
+There are two things we can do:
+\begin{enumerate}
+	\item write something
+	\item don't write anything
+\end{enumerate}
+
+When do we pick one over the other? Some heuristics include
+
+
+\begin{enumerate}
+	\item  LRU cache: kick the least recently used block out of the cache\mn{Hashmap to doubly linked list, or ring buffer for fixed size}
+	\item Random: kick a random block out of the cache
+\end{enumerate}
+
+
+
+
+
 
 
 

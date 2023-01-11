@@ -1,0 +1,7 @@
+ \Procname{$\proc{SkewHeapMerge}(h, h')$}
+\li \If $ h  \equal\equal NIL $ \Then \Return $ NIL $ \End
+\li \If $ h'  \equal\equal NIL $ \Then \Return $ NIL $ \End
+\li \If $ h.key  \le h'.key $ \Then \Return $ \proc{SkewHeapMerge}(h', h) $ \End
+\li $ h.right \gets \proc{SkewHeapMerge}(h.right, h') $
+\li SWAP($ h.left, h.right $)
+\li \Return h

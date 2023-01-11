@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+	mergesort(A, p, r)
+		if p \PYGZlt{} r
+			q = [(p+r)/2]
+			mergesort(A, p, q)  // N/2
+			mergesort(A, q+1, r)  // N/2
+			merge(A, p, q, r) // merge the sorted subarrays
+\end{Verbatim}

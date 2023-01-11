@@ -1,0 +1,9 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+MAXHEAPIFY(A, i)
+	l = LEFT(i)
+	r = RIGHT(i)
+	if l \PYGZlt{}=A.size and A[l] \PYGZgt{} A[i]
+		largest = l
+	else largest = i
+
+\end{Verbatim}

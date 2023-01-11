@@ -89,15 +89,22 @@
 \usepackage{sourcecodepro}    % an actually monospace font
 \usepackage{bookmark}
 \setminted{
-  linenos = true,
   breaklines = true,
-  escapeinside = ``
+  escapeinside = ``,
+  frame=lines,
+  framesep=2mm,
+  mathescape,
+  fontsize=\small,
+  linenos = true
+  autogobble,
 }
+
+\renewcommand{\theFancyVerbLine}{\sffamily \textcolor[rgb]{0.0,0.0,0.0}{\small \oldstylenums{\arabic{FancyVerbLine}}}}
 % \usepackage{newtxmath}        % alternative \vmathbb{1} for \mathbb{1}, etc
 
 % \DeclareFontShape{T1}{lmr}{m}{scit}{<->ssub*lmr/m/scsl}{}%
-
-
+\usepackage{graphics}
+\usepackage{clrscode3e}
 
 % ----------------------------------------------------------------------
 %           User Page Prefrences 

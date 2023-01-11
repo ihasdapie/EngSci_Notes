@@ -1,0 +1,51 @@
+\documentclass[10pt]{article}
+\usepackage{NotesTeXV3,lipsum, tikzit}
+\input{tikzit.tikzstyles}
+% commands to remember
+% \marginnote / \mn
+% \sidenote / \sn
+% \lec{title}{some text}
+% marginfigure
+% margintable
+
+%\usepackage{showframe}
+
+
+\usepackage{subfiles}
+% Silence some annoying errors
+\usepackage{silence}
+  \WarningFilter*{latex}{Marginpar on page \thepage\space moved}
+
+
+\begin{document}
+\hbadness= 10000
+\vbadness= 10000
+\hfuzz=\maxdimen \tolerance=10000
+
+\title{EngSci Year 3 Winter 2022 Notes}
+\author{Brian Chen}
+\affiliation{
+	Division of Engineering Science\\
+	University of Toronto\\
+	\href{https://chenbrian.ca}{https://chenbrian.ca}\\
+}
+\emailAdd{brianchen.chen@mail.utoronto.ca}
+\maketitle
+\newpage
+\pagestyle{fancynotes}
+
+\subfile{sections/csc473.tex}
+\subfile{sections/ece353.tex}
+
+
+% \begin{thebibliography}{99}
+
+% \end{thebibliography}
+
+\end{document}
+
+
+
+
+
+
