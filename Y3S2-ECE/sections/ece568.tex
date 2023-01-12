@@ -1,0 +1,49 @@
+
+\documentclass[../notes.tex]{subfiles}
+
+\graphicspath{{\subfix{../img/}}}
+
+\begin{document}
+
+\section{ECE568 Computer Security}
+
+\subsection{Refresher & Introduction}
+
+Software systems are ubiquitous and critical. Therefore it is important to learn how to protect against malicious actors. This course covers attack vectors and ways to design software securely
+
+
+
+\textbf{Data representation}: It's important to recognize that data is just a collection of bits and it is up to us to tell the computer how it should be interpreted. Oftentimes we can make assumptions, for example assume that an int is an int. But what if we end up being wrong about it? 
+Many security exploits rely on data being interpreted in a different way than originally intended.
+For example,
+
+\begin{listing}[H]
+\begin{minted}{c}
+unsigned long int h = 0x6f6c6c6548; // ascii for hello
+unsigned long int w = 431316168567; // ascii for world
+printf("%s %s", (char*) h, (char*) w);
+\end{minted}
+\caption{An innocent example of where we should be careful about data representation. This prints hello world}
+\end{listing}
+
+This courses makes use of Intel assembler.
+TLDR:
+
+\begin{itemize}
+  \item 6 General-purpose registers
+  \item RAX (64b), EAX(32b), AX(16b), AH/AL(8b), etc
+\end{itemize}
+
+Stack grows
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
