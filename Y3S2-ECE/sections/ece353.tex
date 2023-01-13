@@ -132,7 +132,70 @@ Note that these strings are not null-terminated (null-termination is just a \tex
 The kernel can be thought of as a long-running program with a ton of library code which executes on-demand. Monolithic kernels run all OS services in kernel mode, but micro kernels run the minimum amount of servers in kernel mode. Syscalls are slow so it can be useful to put things in the kernel space to make it faster. But there are security reasons against putting everything in kernel mode.
 
 
+\subsubsection{Processes & Syscalls}
 
+A process is like a combination of all the virtual resources; a "virtual GPU" (if applicable), memory (addr space), I/O, etc.
+The unique part of a struct is the PCB (Process Control Block) which contains all of the execution information. In Linux this is the \texttt{task_struct} which contains information about the process state, CPU registers, scheduling information, and so forth.
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\linewidth]{img/image_2023-01-12-15-21-01.png}
+  \caption{A possible process state diagram}
+\end{figure}
+
+These state changes are managed by the Process and OS\mn{I think} so that the OS scheduler can do its job.
+An example of where some of these states can be useful would be to free up CPU time while a process is in the Blocked state while waiting for IO.
+Process can either manage themselves (cooperative multitasking) or have the OS manage it (true multitasking).
+Most systems use a combination of the two, but it's important to note that cooperative multitasking is not true multitasking.
+
+\marginnote{Process state can be read in \texttt{/proc} for linux systems. }
+
+
+Context switching (saving state when switching between processes) is expensive. Generally we try to minimize the amount of state that has to be saved (the bare minimum is the registers).
+The scheduler decides when to switch. Linux currently uses the CFS\mn{completely fair scheduler}.
+
+
+In \texttt{c} most system calls are wrapped to give additional features and to put them more concretely in the userspace.
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\linewidth]{img/image_2023-01-12-15-34-58.png}
+  \caption{Demonstration of c feature to register functions to call on program exit}
+\end{figure}
+
+\begin{listing}[H]
+\begin{minted}{c}
+int main ( int argc , char * argv []) {
+  printf ("I 'm going to become another process \n" );
+  char * exec_argv [] = {" ls " , NULL };
+  char * exec_envp [] = { NULL };
+  int exec_return = execve ("/ usr / bin / ls " , exec_argv , exec_envp );
+  if ( exec_return == -1) {
+    exec_return = errno ;
+    perror (" execve failed " );
+    return exec_return ;
+  }
+  printf (" If execve worked , this will never print \n" );
+  return 0;
+}
+\end{minted}
+\caption{Demo of execve turning current program to ls (executes program, wrapper around exec syscall)}
+\end{listing}
+
+\begin{listing}[H]
+\begin{minted}{c}
+#include <sys/syscall.h>
+#include <unistd.h>
+
+int main (){
+  syscall(SYS_exit_group, 0);
+}
+
+\end{minted}
+\caption{An example of using a raw syscall system exit instead of c's exit()}
+\end{listing}
 
 
 
