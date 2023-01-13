@@ -7,7 +7,7 @@
 
 \section{ECE568 Computer Security}
 
-\subsection{Refresher & Introduction}
+\subsection{Refresher \& Introduction}
 
 Software systems are ubiquitous and critical. Therefore it is important to learn how to protect against malicious actors. This course covers attack vectors and ways to design software securely
 
@@ -34,12 +34,44 @@ TLDR:
   \item RAX (64b), EAX(32b), AX(16b), AH/AL(8b), etc
 \end{itemize}
 
-Stack grows
+Note that the stack grows downwards and the heap grows upwards. Stack overflows can occur and can be a source of vulnerability.
 
 
+GDB offers some tools for examining stacks
+
+\begin{itemize}
+    \item \texttt{break}: create a new breakpoint
+    \item \texttt{run}: start a new process
+    \item \texttt{where}: list of current stack frames
+    \item \texttt{up/down}: move between frames
+    \item \texttt{info frame} display info on current frame
+    \item \texttt{info args}: list function arguments
+    \item \texttt{info locals}: list local variables
+    \item \texttt{print}: display a variable
+    \item \texttt{x} display contents of memory
+\end{itemize}
+
+\begin{itemize}
+    \item \texttt{fork}: Creates a new child process by duplicating the parent. The child has its own new unique process ID
+    \item \texttt{exec}: Replaces the current process with a new process
+\end{itemize}
+
+\marginnote{The fork-exec technique is just a pair of \texttt{fork} and \texttt{exec} system calls to spawn a new program in a new process}
 
 
+\subsubsection{Security Fundamentals}
 
+The three key components of security are:
+
+\begin{itemize}
+    \item Confidentiality: the protection of data/resources from exposure, whether it be the content or the knowledge that the resource exists in the first place. Usually via organizational controls (security training), access rules, and cryptography.
+    \item Integrity: Trustworthiness of data (contents, origin). Via monitoring, auditing, and cryptography.
+    \item Availability: Ability to access/use a resource as desired. Can be hard to ensure; uptime, etc...
+\end{itemize}
+
+Together they form an acryonym: CIA. A system is considered secure if it has all three of these properties for a given time.
+The strength of cryptographic systems can be evaluated by the number of bits of entropy or their complexity. For example, a 128-bit key has 2^128 possible values. This would take a lot of time to break, and a 256-bit key even longer.
+Availability is harder to measure quantitatively and is instead traditionally measured qualitatively. For example, a system may be available 99.9\% of the time. But this doesn't we
 
 
 
