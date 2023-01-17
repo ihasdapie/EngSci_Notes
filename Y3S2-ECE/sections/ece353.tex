@@ -132,10 +132,10 @@ Note that these strings are not null-terminated (null-termination is just a \tex
 The kernel can be thought of as a long-running program with a ton of library code which executes on-demand. Monolithic kernels run all OS services in kernel mode, but micro kernels run the minimum amount of servers in kernel mode. Syscalls are slow so it can be useful to put things in the kernel space to make it faster. But there are security reasons against putting everything in kernel mode.
 
 
-\subsubsection{Processes & Syscalls}
+\subsubsection{Processes \& Syscalls}
 
 A process is like a combination of all the virtual resources; a "virtual GPU" (if applicable), memory (addr space), I/O, etc.
-The unique part of a struct is the PCB (Process Control Block) which contains all of the execution information. In Linux this is the \texttt{task_struct} which contains information about the process state, CPU registers, scheduling information, and so forth.
+The unique part of a struct is the PCB (Process Control Block) which contains all of the execution information. In Linux this is the \texttt{task\_struct} which contains information about the process state, CPU registers, scheduling information, and so forth.
 
 
 \begin{figure}[H]
