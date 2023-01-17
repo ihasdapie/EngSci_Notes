@@ -6,7 +6,7 @@
 
 \section{CSC473: Advanced Algorithms}
 
-\subsection{Global Min-Cut}
+\subsection{Global Min-Cut (Karger's Contraction Algorithm)}
 
 
 \textbf{Given} an undirected, unweighted, and connected graph $ G = (V, E) $, \textbf{return} the smallest set of edges that disconnects $ G $
@@ -104,31 +104,87 @@ Therefore by running the algorithm a polynomial number of times and returning th
   \begin{proof}
     Take a global min-cut $ (A, B) $ of $ G $ and suppose it has size $ k $, i.e. there is a set $ F $ of $ k $ edges with one end in $ A $ and the other in $ B $.
     If an edge in $ F $ gets contracted then a node of $ A$ and a node in $ B $ would get contracted together and then the algorithm would no longer output $ (A, B) $, a global min-cut.
-
     An upper bound on the probability that an edge in $ F $ is contracted is the ratio of $ k $ to the size of $ E $. A lower bound on the size of $ E $ can be imposed by noting that if any node $ v $ has degree $ < k $ then $ ({v}, V\setminus {v}) $ would form a cut of size less than $ k $ -- which contradicts our first assumption that $ (A,B) $ is a global min-cut.
     So the probability than an edge in $ F $ is contracted at any step is
 
     \begin{equation}
       \frac{k}{(\frac{k}{2})} = \frac{2}{n}
     \end{equation}
+    Note that here we use the number of vertices instead of the number of edges since each contraction removes (combines) one vertex, whereas since the amount of edges after a contraction can be very difficult to calculate.
 
-    Let's inspect the algorithm after $ j $ iterations. 
+    Next, let's inspect the algorithm after $ j $ iterations. 
     There will be $ n-j $ supernodes in $ G' $ and we can take that no edge in $ F $ has been contracted yet. 
     Every cut of $ G' $ is a cut of $ G $, so there are at least $ k $ edges incident to every supernode of $ G' $\mn{since the min-cut has $ k $ edges}. Therefore $ G' $ has at least $ \frac{1}{2}k(n-j) $ edges, and so the probability than an edge of $ F $ is contracted in $ j+1 $ is at most
+    \marginnote{In terms of edges, it would be $ \frac{k}{m_{i-1}} $, but again, edges are difficult to work with so we'll do it w.r.t the vertices/supernodes}
 
     \begin{equation}
       \frac{k}{\frac{1}{2}k(n-j)} = \frac{2}{n-j}
     \end{equation}
 
 
-  The global min-cut will be actually returned by the algorithm if no edge of $ F $ is contracted in iterations $  1 - n $.
-  The probability of 
+  \begin{equation}
+    P(A_i | A_1\ldots_{i-1}) \ge \frac{n-i-1}{n-i+1} = 1 - \frac{2}{n-i+1}
+  \end{equation}
 
+
+  The global min-cut will be actually returned by the algorithm if no edge of $ F $ is contracted in iterations $  1 - n $.
+
+  What we want to know, then, is what is the probability of this algorithm never making a mistake?
+
+
+  \marginnote{This prof uses commas to indicate intersection...}
+  \begin{equation}
+    P(A_1 \ldots A_{n-1}) = P(A_1)P(A_2 | A_1) P(A_3 | A_1, A_2) \ldots P(A_{n-2} | A_1, A_2, \ldots, A_{n-3})
+  \end{equation}
+
+  From what we found previously we know that this is 
+
+  \begin{equation}
+    \ge \frac{n-2}{n} \times \frac{n-3}{n-1} \times \frac{n-4}{n-2} \ldots \times \frac{2}{4} \times \frac{1}{3}  = \frac{2}{n(n-1)} =  \frac{1}{\binom{n}{2}}
+  \end{equation}
 
   \end{proof}
-  
+
+  This gives us a bound of $ O(n^2) $ using the $ n^2 $ term from the number of contractions and then $ n^2 $ to get correct output with constant probability of success.
 
 \end{lemma}
+
+
+The key observation is that early contractions are much less likely to lead to a mistake, which leads us to the Karger-Stein min cut. 
+
+\subsection{Karger-Stein Min Cut Algorithm}
+
+This algorithm solves the global min-cut problem in $ O(n^2 \log^2 n) $ by taking advantage of the earlier cuts; it stops the contraction algorithm after an arbitrary fraction of contractions steps and then recursively contracts \textit{more carefully}.
+
+Exercise: show the following:
+
+
+The probability of no mistake in the first $ i $ contractions
+\begin{equation}
+  P(A_1, A_2, \ldots A_i) \ge \frac{(n-i)(n-i-1)}{n(n-1)}
+\end{equation}
+
+
+\begin{codebox}
+\Procname{$\proc{min-cut}(G = (V,E))$}
+\li \If $ G $ has two supernodes corresponding to $ S, \hat{S} $
+\li   \Return $ S, \hat{S} $\End 
+\li Run the contraction algorithm until $ \frac{n}{\sqrt{2} } + 1 $ supernodes remain
+\li Let $ G' $ be the resulting contracted multigraph
+\li $ (S_1, \hat{S_1}) = \proc{pin-cut}(G') $
+\li $ (S_2, \hat{S_2}) = \proc{pin-cut}(G') $
+\li \Return the cut ($ S_i, \hat{S_i}$) with the smaller number of edges
+\end{codebox}
+
+\begin{theorem}
+  $ \proc{Min-cut}(G) $ runs in $ O(n^2) \log n $ and outputs a min cut of $ G $ with probability of at least $ \frac{1}{O(\log n)} $\mn{So repeat the algorithm $ O(\log(n)) $ times, leading to $ O(n^2 \log^2 n) $ runtime} 
+\end{theorem}
+
+
+
+
+
+
 
 
 \begin{blockquote}
