@@ -197,7 +197,338 @@ int main (){
 \caption{An example of using a raw syscall system exit instead of c's exit()}
 \end{listing}
 
+\subsection{Fork, Exec, And Processes}
+
+\begin{itemize}
+    \item \texttt{fork} creates a new process which is a copy of the current process. Everything is exactly the same except for the PID in the child and PID in the parent.
+        \begin{itemize}
+            \item Returns -1 on error, 0 in the child process, and the pid of the child in the parent process
+        \end{itemize}
+    \item \texttt{exec} replaces the current process with a new one
+        \begin{itemize}
+            \item Returns -1 on error
+        \end{itemize}
+
+
+\end{itemize}
+
+Process states:
+
+\begin{itemize}
+    \item The CPU is responsible for \textit{scheduling} processes, so there can be >1 process per core.
+    \item Maintaining the parent-child relationship
+        \begin{itemize}
+            \item Parent is responsible for the child 
+            \item This usually works; the parent can wait for the child to finish. But what if the parent crashes, etc?
+            \item Zombie: a process that has finished but has not been cleaned up by its parent. This can be a problem because the process is still using resources. The OS has to keep a zomibe process until it's acknowledged. To avoid zombie build-up the OS can signal the parent process (over IPC) to acknowledge the child. (The parent can ignore it)
+            \item Orphan: a process that has no parent. This can happen if the parent crashes. The OS can adopt the orphan and make it a child of the init process which can keep onto them or kill them as needed.
+        \end{itemize}
+\end{itemize}
+
+\begin{listing}[H]
+\begin{minted}{c}
+int main(int argc, char *argv[]) {
+    pid_t pid = fork();
+  if (pid == -1) {
+    int err = errno; perror("fork failed"); return err;
+  }
+  if (pid == 0) {
+    printf("Child parent pid: %d\n", getppid());
+    sleep(2);
+    printf("Child parent pid (after sleep): %d\n", getppid());
+  }
+  else {
+    sleep(1); }
+  return 0; }
+\end{minted}
+\caption{orphan example: parent exits before child and \texttt{init} has to clean up}
+\end{listing}
+
+\subsection{IPC}
+
+Reading and writing files is a form of IPC. For example, a simple process could write everything it reads, i.e this facsimile of the \texttt{cat} program
+
+\marginnote{Standard file descriptors: 0 = stdin, 1 = stdout, 2 = stderr}
+
+\begin{listing}[H]
+\begin{minted}{c}
+int main() {
+  char buffer[4096];
+  ssize_t bytes_read;
+  // read (see man 2 read) reads from a file descriptor
+  // can't assume always successful; see from `man errno`
+  //   Nearly all of the system calls provide an error number in the external variable errno, which is defined as: extern int errno. Refer to man pages for what each errno means.
+
+  while ((bytes_read = read(0, buffer, sizeof(buffer))) > 0) {
+    ssize_t bytes_written = write(1, buffer, bytes_read);
+    if (bytes_written == -1) {
+      int err = errno;
+      perror("write");
+      return err;
+    }
+    assert(bytes_read == bytes_written);
+  }
+  if (bytes_read == -1) {
+    int err = errno;
+    perror("read");
+    return err;
+  }
+  assert(bytes_read == 0);
+  return 0;
+}
+\end{minted}
+\end{listing}
+
+
+Another way of IPC is using signals. Common signals include
+
+\begin{itemize}
+    \item SIGINT (Ctrl-C)
+    \item SIGKILL (kill -9)
+    \item EOF (Ctrl-D)
+\end{itemize}
+
+
+A signal pauses (interrupts) your program and then runs the signal handler. Process can be interrupted at any point in execution, and the process will resume after the signal handler finishes.
+
+
+\begin{listing}[H]
+\begin{minted}{c}
+void handle_signal(int signum) {
+  printf("Ignoring signal %d\n", signum);
+}
+
+void register_signal(int signum)
+{
+  struct sigaction new_action = {0};
+  sigemptyset(&new_action.sa_mask);
+  new_action.sa_handler = handle_signal;
+  if (sigaction(signum, &new_action, NULL) == -1) {
+    int err = errno;
+    perror("sigaction");
+    exit(err);
+  }
+}
+
+int main(int argc, char *argv[])
+{
+  if (argc > 2) {
+    return EINVAL;
+  }
+
+  if (argc == 2) {
+    close(0);
+    int fd = open(argv[1], O_RDONLY);
+    if (fd == -1) {
+      int err = errno;
+      perror("open");
+      return err;
+    }
+  }
+
+  register_signal(SIGINT);
+  register_signal(SIGTERM);
+
+  char buffer[4096];
+  ssize_t bytes_read;
+  while ((bytes_read = read(0, buffer, sizeof(buffer))) > 0) {
+    ssize_t bytes_written = write(1, buffer, bytes_read);
+    if (bytes_written == -1) {
+      int err = errno;
+      perror("write");
+      return err;
+    }
+    assert(bytes_read == bytes_written);
+  }
+  if (bytes_read == -1) {
+    int err = errno;
+    perror("read");
+    return err;
+  }
+  assert(bytes_read == 0);
+  return 0;
+}
+\end{minted}
+\end{listing}
+
+\begin{itemize}
+    \item \texttt{register\_signal} sets a bunch of things such that we can handle the signal i.e. execute a function when a signal occurs. In this program we register SIGINT and SIGTERM with the kernel to execute \texttt{handle\_signal}. 
+    \item This will still fail on ctrl-c because the read system call can error out
+\end{itemize}
+
+
+\begin{listing}[H]
+\begin{minted}{c}
+ssize_t bytes_read;
+  while ((bytes_read = read(0, buffer, sizeof(buffer))) != 0) {
+    if (bytes_read == -1) {
+      if (errno == EINTR) {
+	continue;
+      }
+      else {
+	break;
+      }
+    }
+    ssize_t bytes_written = write(1, buffer, bytes_read);
+    if (bytes_written == -1) {
+      int err = errno;
+      perror("write");
+      return err;
+    }
+    assert(bytes_read == bytes_written);
+  }
+  if (bytes_read == -1) {
+    int err = errno;
+    perror("read");
+    return err;
+  }
+  assert(bytes_read == 0);
+  return 0;
+}
+\end{minted}
+\end{listing}
+
+\begin{itemize}
+    \item This snippet checks errno. and trys read again. Then the program is able to handle ctrl-c.
+    \item This program can still get killed by kill -9 since it doesn't handle SIGKILL.
+    \item Let's say we register $ SIGKILL $ with the kernel to execute \texttt{handle\_signal}. This will not work because you aren't allowed to ignore SIGKILL (-9).
+\end{itemize}
+
+
+Another thing we're interested in is to find out when a process is done. This can be polling on \texttt{waitpid}\mn{wait for process termination}
+
+\begin{listing}[H]
+\begin{minted}{c}
+
+int main() {
+  pid_t pid = fork();
+  if (pid == -1) {
+    return errno;
+  }
+  if (pid == 0) {
+    sleep(2);
+  }
+  else {
+    pid_t wait_pid = 0;
+    int wstatus;
+
+    unsigned int count = 0;
+    while (wait_pid == 0) {
+      ++count;
+      printf("Calling wait (attempt %u)\n", count);
+      wait_pid = waitpid(pid, &wstatus, WNOHANG);
+    }
+
+    if (wait_pid == -1) {
+      int err = errno;
+      perror("wait_pid");
+      exit(err);
+    }
+    if (WIFEXITED(wstatus)) {
+      printf("Wait returned for an exited process! pid: %d, status: %d\n", wait_pid, WEXITSTATUS(wstatus));
+    }
+    else {
+      return ECHILD;
+    }
+  }
+  return 0;
+}
+\end{minted}
+\end{listing}
+
+Alternatively, we should use interrupts
+
+\begin{listing}[H]
+\begin{minted}{c}
+void handle_signal(int signum) {
+  if (signum != SIGCHLD) {
+    printf("Ignoring signal %d\n", signum);
+  }
+
+
+  printf("Calling wait\n");
+  int wstatus;
+  pid_t wait_pid = wait_pid = waitpid(-1, &wstatus, WNOHANG);
+  // Here in our interrupt (signal) handler) we check for SIGCHILD and then waitpid the child if applicable
+  if (wait_pid == -1) {
+    int err = errno;
+    perror("wait_pid");
+    exit(err);
+  }
+  if (WIFEXITED(wstatus)) {
+    printf("Wait returned for an exited process! pid: %d, status: %d\n", wait_pid, WEXITSTATUS(wstatus));
+  }
+  else {
+    exit(ECHILD);
+  }
+  exit(0);
+}
+
+void register_signal(int signum) {
+  struct sigaction new_action = {0};
+  sigemptyset(&new_action.sa_mask);
+  new_action.sa_handler = handle_signal;
+  if (sigaction(signum, &new_action, NULL) == -1) {
+    int err = errno;
+    perror("sigaction");
+    exit(err);
+  }
+}
+
+int main() {
+  register_signal(SIGCHLD);
+
+  pid_t pid = fork();
+  if (pid == -1) {
+    return errno;
+  }
+  if (pid == 0) {
+    sleep(2);
+  }
+  else {
+    while (true) {
+      printf("Time to go to sleep\n");
+      sleep(9999);
+    }
+  }
+  return 0;
+}
+\end{minted}
+\end{listing}
+
 
 
 
 \end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -167,18 +167,86 @@ The probability of no mistake in the first $ i $ contractions
 
 \begin{codebox}
 \Procname{$\proc{min-cut}(G = (V,E))$}
-\li \If $ G $ has two supernodes corresponding to $ S, \hat{S} $
+\li \If $ G $ has two supernodes corresponding to $ S, \hat{S} $ \Then
 \li   \Return $ S, \hat{S} $\End 
 \li Run the contraction algorithm until $ \frac{n}{\sqrt{2} } + 1 $ supernodes remain
 \li Let $ G' $ be the resulting contracted multigraph
-\li $ (S_1, \hat{S_1}) = \proc{pin-cut}(G') $
-\li $ (S_2, \hat{S_2}) = \proc{pin-cut}(G') $
+\li $ (S_1, \hat{S_1}) = \proc{min-cut}(G') $
+\li $ (S_2, \hat{S_2}) = \proc{min-cut}(G') $
 \li \Return the cut ($ S_i, \hat{S_i}$) with the smaller number of edges
 \end{codebox}
 
 \begin{theorem}
   $ \proc{Min-cut}(G) $ runs in $ O(n^2) \log n $ and outputs a min cut of $ G $ with probability of at least $ \frac{1}{O(\log n)} $\mn{So repeat the algorithm $ O(\log(n)) $ times, leading to $ O(n^2 \log^2 n) $ runtime} 
+
+
+  \begin{proof}
+      The intuition for this can be developed by drawing out a recursion tree for this problem.
+      At each level the number of recursive call doubles, but the time it takes for each sub-call halves as well.
+      This means that the total runtime for each level is $ n^2 $. 
+      As for the total time will just be $ O(n^2 \log (n))$, since we know the height of the recursion tree to be $ \log n $.
+
+
+      More formally, the recursion may be described with 
+
+      \begin{equation}
+          T(n) \le  2T(\frac{n}{\sqrt{2} } + O(n^2))
+      \end{equation}
+
+      Which can \mn{I think? } be solved with the master theorem.
+      
+  \end{proof}
+  
+
+
 \end{theorem}
+
+We may also want to understand the probability of success.
+
+\begin{itemize}
+    \item We may deem a node in the recursion tree to be \textit{successful} if it survives the contractions.
+        \begin{itemize}
+            \item There must be a leaf node in a recursion tree that successfully produces a min-cut that corresponds to a min-cut, therefore there must also be a sequence of \textit{successful} nodes from the root to said min cut.
+        \end{itemize}
+    \item $ P(d) $ as the probability that a node at depth d is successful, conditioned on it's ancestors being successful
+\end{itemize}
+
+Now, how can we find $ P(h) $? I.e. the probability of the algorithm being successful on termination.
+\begin{itemize}
+    \item Base case: $ P(0) \ge \frac{1}{2} $ (will assume $ = \frac{1}{2} $, worst case)
+    \item Inductive step: $ P(D) = \frac{1}{2} ( 1- (1-(P(d-1)))^2 ) = \frac{1}{2} (2P(d-1) - P(d-1)^2) $ 
+      \begin{itemize}
+        \item At each level the probability of success is at least $ \frac{1}{2}$, conditioned on the ancestors being successful.
+      \end{itemize}
+\end{itemize}
+
+What remains now is solving this recursion.
+
+
+\begin{equation}
+  P(d) = P(d-1) - \frac{1}{2} P(d-1)^2
+\end{equation}
+
+The way of solving a non-linear recursion is to make a guess.
+We expect this to be on the order of
+
+\begin{equation}
+  P(d) \ge  \frac{1}{d}
+\end{equation}
+
+And then as it turns out it's 
+
+\begin{equation}
+  P(d) = \frac{1}{d+2}
+\end{equation}
+
+And then this can be checked by doing an induction proof
+
+
+
+
+
+
 
 
 
