@@ -99,12 +99,24 @@
   autogobble,
 }
 
+
+% non-stupid forall, exists
+\let\oldforall\forall
+\renewcommand{\forall}{\oldforall \, }
+
+\let\oldexist\exists
+\renewcommand{\exists}{\oldexist \: }
+
+\newcommand\existu{\oldexist! \: }
+
 \renewcommand{\theFancyVerbLine}{\sffamily \textcolor[rgb]{0.0,0.0,0.0}{\small \oldstylenums{\arabic{FancyVerbLine}}}}
 % \usepackage{newtxmath}        % alternative \vmathbb{1} for \mathbb{1}, etc
 
 % \DeclareFontShape{T1}{lmr}{m}{scit}{<->ssub*lmr/m/scsl}{}%
 \usepackage{graphics}
 \usepackage{clrscode3e}
+
+\hfuzz=200.0pt 
 
 % ----------------------------------------------------------------------
 %           User Page Prefrences 

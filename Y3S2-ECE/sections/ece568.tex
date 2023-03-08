@@ -208,8 +208,11 @@ void main () {
     char buf[256];
     snprintf(buf, 256, "AB,%08x,%08x,%08x,%08x,%08x,%08x,%08x,%08x,%08x,%08x", 5);
     printf(buf);
-    // AB,00000005,00000000,29ee6890,302c4241,2c353030,30303030,39383665,32346332,33353363,30333033%                                                                                                                  
-    // if we look at the 3rd clause as ascii we get '0,BA' (recall intel little endian) i.e. we've read up far enough to see the local variable specifying the format string pushed onto the stack earlier
+    // AB,00000005,00000000,29ee6890,302c4241,2c353030,30303030,
+    // 39383665,32346332,33353363,30333033
+    // if we look at the 3rd clause as ascii we get '0,BA'
+   //  (recall intel little endian) i.e. we've read up far enough to see the local variable
+   // specifying the format string pushed onto the stack earlier
 }
 \end{minted}
 \end{listing}
@@ -461,7 +464,8 @@ void main () {
     char buf[256];
     snprintf(buf, 256, "AB,%08x,%08x,%08x,%08x,%08x,%08x,%08x,%08x,%08x,%08x", 5);
     printf(buf);
-    // AB,00000005,00000000,29ee6890,302c4241,2c353030,30303030,39383665,32346332,33353363,30333033%                                                                                                                  
+    // AB,00000005,00000000,29ee6890,302c4241,2c353030,30303030,39383665,
+    // 32346332,33353363,30333033
     // if we look at the 3rd clause as ascii we get '0,BA' (recall intel little endian) i.e. we've read up far enough to see the local variable specifying the format string pushed onto the stack earlier
 }
 \end{minted}
@@ -620,25 +624,783 @@ Finding return addresses is hard. So we can use other methods to inject code int
 \end{itemize}
 
 
+\subsubsection{Deserialization attacks}
+
+\begin{itemize}
+    \item Serialization is the process of transforming objects into a format that can be stored or transmitted over a network, i.e. to/from JSON.
+    \item The attacker knows that the library has a vulnerability in the deserialization process and they can exploit it by passing carefully created data to it.
+\end{itemize}
+
+
+\subsubsection{Integer overflows}
+
+\begin{itemize}
+    \item A server processes packets of variable size
+    \item First 2 bytes of the packet store the size of the packet to be processed
+    \item Only packets of size 512 should be processed
+    \item Problem: what if we end up overflowing the integer with a negative value which would cause memcpy to copy over a lot more memory than intended.
+\end{itemize}
+
+\begin{listing}[H]
+\begin{minted}{c}
+char* processNext(char* strm){
+    char buf[512];
+    short len = *(short*)strm; // note that by default these are signed
+    if (len <= 512) {
+        memcpy(buf, strm, len); // note that the 3rd arg of memcpy is an unsigned int
+        process(buf);
+        return strm + len;
+    } else {
+        return -1
+    }
+}
+\end{minted}
+\end{listing}
+
+
+
+\subsubsection{IoT}
+
+
+\subsection{Case Study: Sudo}
+
+A common program attackers target are programs that regular users can run in order to take on elevated privileges.
+In \texttt{unix} systems one such program is \texttt{sudo}, for which vulnerability CVE-2021-3156 was discovered in 2021 after lying in there for over 10 years.
+
+
+\begin{itemize}
+    \item \texttt{sudo} will escape certain characters such as "
+    \item Someone introduced debug logic called user\_args and then copies in the contents of \texttt{argv}, while un-escaping meta-characters
+    \item Bug: if any command-line arg ends in a single backslash, then the null-terminator gets un-escaped and then \texttt{user\_args} keeps copying out of bounds characters onto the stack
+    \item I.e. \texttt{sudoedit -s '\textbackslash' \$(perl -e print "A"x1000\$)}
+    \item Attacker controls the size of \texttt{user\_args} buffer they overflow. Can control size and contents of the overflow itself; last command-line argument is followed by the environment variables
+    \item  Had many exploit options
+        \begin{itemize}
+            \item Overwrite next chunk's memory tag (same as use-after-free)
+            \item Function pointer overwrite one of sudo's functions
+            \item Dynamically-linked library overwrite
+            \item Race condition a temp file sudo creates
+            \item Overwrite the string "usr/bin/sendmail" with the name of another executable, maybe a shell
+        \end{itemize}
+\end{itemize}
+
+
+\subsection{Case Study: Buffer overflow in a Tesla}
+
+\texttt{ConnMann} (Connection Manager) is a lightweight network manager used in many embedded systems, i.e. nest thermostats and Teslas for that manager.
+
+
+
+In this particular vulnerability the attacker took advantage of the DNS protocol.
+DNS responses include a special encoding for the hostnames which help the receiver parse the response and allocated appropriately sized buffers. For example www.google.com is encoded as 3www6google3com.
+This response also often contains a lot of repetitive information, so there is some compression is used in the encoding as well. The one we're interested in here is the compression of names by encoding them as a special "field length" of 192 followed by the offset of the other copy of the name -- which enables repetitions to be encoded as 2 bytes.
+
+CVE-2021-26675 was reported by Tesla in 2021 as a bug in ConnMan which allows an malicious DNS reply to uncompress into a large string that can overflow an internal buffer.
+This means that a remote attacker who can control or fake a DNS response could perform a buffer overflow on ConnMan -- which runs with root privileges.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-01-23-19-05-37.png}
+    \caption{ConnMan doesn't initialize the dhcp\_packet struct to 0, which can cause it to leak stack values to a remote attacker (but here they must be on the same subnet as the victim). This vulnerability can be difficult to detect since nobody checks if things are zero in the tests.}
+\end{figure}
+
+
+\begin{blockquote}
+    \textbf{So you want to a hack a tesla?}
+    \begin{itemize}
+        \item Look at the situation; see what kind of protocols being used, etc. Get excited if it uses something old and inane
+        \item Look at the data coming in and our, especially if there's any extra going in or out
+        \item Use fuzzing tools
+        \item Get a sense of what they are expecting us to do as well as what are ways that we can break that example. For example is the only verification just some client-side JavaScript?
+        \item Break stuff
+    \end{itemize}
+\end{blockquote}
+
+
+
+
+
+\subsection{Fault Injection Attacks}
+
+We make a lot of assumptions about how the underlying systems work. For example proper CPU operation.
+Fault injection attacks take advantage of these assumptions by injecting faults into the system, often at the hardware level.
+
+For example: proper pipelined CPU operation depends on stable power and clock inputs.
+If the glitch duration is longer than the time it takes to increment the PC and shorter than the instruction fetch time, then we can start to see a special case: instruction skipping or instruction corruption.p
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-01-23-19-40-51.png}
+    \caption{With some careful timing we can cause the CPU to skip or repeat an instruction.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-01-23-19-41-31.png}
+    \caption{An example of where this can be useful: skipping the JMP instruction of an IF statement}
+\end{figure}
+
+
+\subsubsection{Hardware Demo}
+
+
+Consider this simple program that checks a text buffer for a password and then logs you in if it's correct
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-01-23-19-44-00.png}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-01-23-19-44-33.png}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-01-23-19-44-46.png}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-01-23-19-45-52.png}
+    \caption{The ATMega238P hooked up to a custom security test tool built on top of a ESP32}
+\end{figure}
+
+
+Our attack is to use a \textbf{clock glitch}\mn{A series of very brief and rapid clock pulses} at the time of the return instruction.
+Finding the time of the return instruction is a bit tricky but we can just sweep across a range of times.
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-01-23-19-52-22.png}
+    \caption{Looking at the oscilloscope to show the sweeped input}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-01-23-19-53-10.png}
+    \caption{Note crazy clock pulses which we try to line up with the return instruction. If we have a really good chip we can try it with only 1 pulse, but here we use 5 pulses because we're on a cheaper chip. We also don't happen to care too much about whether or not if we disrupt too many of the other instructions.}
+\end{figure}
+
+
+
+Another attach that is a bit easier to use is the \textbf{power glitch}: instead of not giving it enough time for the fetch to happen we take away the nice voltage going to the chip right at the instruction execution time. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-01-23-19-59-04.png}
+    \caption{A power glitch attack disrupts the fetch instruction or the decode}
+\end{figure}
+
+Defense for these attacks is to disallow physical access to the chip. For the power one it can be as simple as adding a little capacitor to the power supply to smooth it out.
+Likewise, there are many ways to cause controlled circuit malfunctions: lasers, strobes, EM pulses, etc.
+
+
+\subsection{Reverse Engineering}
+
+Reverse Engineering, or the act of analyzing a product in order to learn something about its design which its creator wanted to keep secret.
+It is a legally complicated, but generally it's ok for the purposes of achieving interoperability (but not for circumventing DRMs).
+
+
+\begin{listing}[H]
+\begin{minted}{c}
+unsigned int printhelloworld() {
+    printf("Hello World!");
+    return 5;
+}
+int main (int argc, char *argv[]) {
+    unsigned int result = 0;
+    result = printhelloworld();
+    if (result == 4) {
+        printf("super secrete string\n");
+    }
+    return 0;
+}
+\end{minted}
+\end{listing}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-01-23-20-35-06.png}
+    \caption{Passing the binary compiled from the above code to a disassembler}
+\end{figure}
+
+With the disassembled binary we know where the instruction for the if statement we were curious about lives, so we can then just use hexedit to change the bits at that JMP to a NOP to print out the super secret string.
+
+
+\subsection{Buffer Overflow Defenses}
+
+\begin{itemize}
+    \item Audit code rigorously
+    \item Use a type-safe language with bounds checking (Java, C\#, rust)
+    \item However, this is not always possible due to legacy code, performance, etc.
+    \item Defending against stack smashing
+        \begin{itemize}
+            \item Stackshield: put return addresses on a seperate stack with no other data buffers there
+            \item Stackguard: a random canary value is placed just before the RA on a function call. If the canary value changes, the program is halted. This can be enabled via a flag on most modern compilers.
+        \end{itemize}
+    \item Third-party libc i.e. libsfae which doesn't allow for '\%n` in format strings
+    \item Address space layout randomization: maps the stack of each process at a randomly selected location with each invocation, so that an attacker will not be able to easily guess the target address. GCC does do this by default.
+
+\end{itemize}
+
+If we really sit down and think about it, it's basically impossible to defend against all attacks. 
+It's easy to make a mistake and end up with a vulnerability. Certain vulnerabilities can be avoided by using safer languages, but the only real defense is to be aware and careful.
+One approach is what the aerospace industry does, i.e. the swiss cheese model \mn{if we stack a lot of hole-y cheese on top of each other it will be opaque}
+
+
+\subsection{Cryptography}
+
+
+
+\begin{blockquote}
+    \textbf{Case Study: Espressif ESP32} 
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-01-30-18-19-48.png}
+    \end{figure}
+
+    \begin{itemize}
+        \item Microcontroller that the prof used for the demo last class
+        \item Programming the microcontroller usually happens during the manufacturing phase
+        \item Flash memory is usually partitioned into the bootloader, data, and application
+        \item In the factory the ESP32 will generate a random number (on first boot) in order which will be used to encrypt and hash the bootloader and the data on the board. Then it starts the applications.
+        \item On subsequent boots the device will make recalculate the hash to make sure that the bootloader has not been tampered with.
+        \item More information about using PGP encryption for the data partition, etc. Not too important.
+        \item TLDR: lots of encryption and security features built into the chip
+    \end{itemize}
+\end{blockquote}
+
+\begin{blockquote}
+    \textbf{Case Study: Door Alarm} 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-01-30-18-43-35.png}
+    \end{figure}
+
+    What would a small-scale communication-channel pentest look like for this?
+
+
+    1. Look at FCC report
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-01-30-18-45-35.png}
+        \caption{In this case this was barely done so it wasn't very useful}
+    \end{figure}
+
+    2. Make reasonable guesses
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-01-30-18-46-55.png}
+        \caption{Guess that this cheap device is on unlicensed 433 MHz band}
+    \end{figure}
+
+    3. Listen into the signal
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-01-30-18-47-45.png}
+        \caption{Use a software-defined radio to inspect the signal}
+    \end{figure}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-01-30-18-48-22.png}
+        \caption{Top signal is lock, bottom signal is unlock. Here we don't know what they are yet but there \textit{is} some sort of unique binary pattern being produced on the button clicks.}
+    \end{figure}
+
+    4. Replay?
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-01-30-18-50-56.png}
+        \caption{Can just use a radio recorder/playback device to record the signal and play it back in order to unlock the doorlock}
+    \end{figure}
+
+\end{blockquote}
+
+As it turns out industrial systems tend not be be any more secure
+
+
+\subsubsection{Ciphers}
+
+Cryptography is used to establish the confidentiality, integrity, authenticity, and non-repudiation\mn{Prevents a principal from denying they have performed an action} of data.
+
+\begin{itemize}
+    \item Ciphers an algorithm that obfuscates data so that it seems random to anyone hwo does not possess special information called a key.
+    \item Based on a class of functions called trapdoor one-way functions, i.e. easy to compute but inverse is difficult to compute. Trapdoor means that given the key the inverse becomes easy to compute\mn{Note that never been proven/disproven that one-way functions exist. Plus if it's been proved it would show $ P \neq  NP $}
+    \item Function itself should not be the critical secret (Kerckhoff's principle)
+\end{itemize}
+
+Two common one-way functions used are factoring ($ z=(x*y)$ find x,y) and discrete log ($z= x^y \% m $ -- given z, x, m, find $ y = \log_x z \% m $)
+
+\begin{definition}
+    \textbf{Caesar (Shift) Cipher} 
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-01-30-19-13-50.png}
+        \caption{A contrived cipher}
+    \end{figure}
+
+    Note that even this may be difficult to crack in reasonable time with a brute-force attack if we happen to have a large enough alphabet.
+\end{definition}
+
+\begin{definition}
+    A slightly better cipher would be a substitution cipher
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-01-30-19-21-41.png}
+    \end{figure}
+
+    There's a one-to-one mapping between the plaintext and the ciphertext, so we can use patterns in the data to figure out a heuristic to reverse the cipher. For example in English $ E $ is the most common letter (and there are likewise common digraphs e.g. $ TH, HE $, etc) and as such can be used to make informed guesses as to the substitutions being used
+
+\end{definition}
+
+An improvement to the monoalphabetic substitution cipher described above is the polyalphabetic substitution cipher. In this case we have a set of $ n $ mappings in the cipher and change hte mapping with every character.
+However these ciphers are still periodic. For small $ n $ this is not a problem, but for large $ n $ it becomes a large challenge.
+
+
+\begin{blockquote}
+    Enigma Machine
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-01-30-19-30-24.png}
+    \end{figure}
+
+    \begin{itemize}
+        \item A substitution cipher with a really large cipher during early war efforts
+        \item Decryption/encryption via initial rotor position etc that would be agreed on.
+    \end{itemize}
+\end{blockquote}
+
+
+The gold standard for encryption is the substitution cipher taken to the extreme: the one-time-pad.
+
+\begin{definition}
+    \textbf{One-time-pad}
+
+    \begin{itemize}
+        \item A random substitution is used for every character
+        \item Think about it as using an infinite number of keys
+        \item A message with $ n $ bits of information an OTP adds n bits of randomness to make a completely random ciphertext --> Theoretically unbreakable
+        \item Key overhead of 100\% (key length equal to message length) and key reuse is not allowed
+        \item Cipher is malleable (bit flips in ciphertext correspond to bit flips in plaintext); requires integrity check
+        \item How to make a random key? Need good random number generator
+        \item OTP is strong against ciphertext-only attacks but is exteremely weak against known-plaintext attack (only need one pair). 
+    \end{itemize}
+
+\end{definition}
+
+
+Practical ciphers are ones with fixed length keys that are shorter than the message and are independent of message length. They should also be efficient to use for encryption/decryption while being computationally difficult without the key.
+
+\begin{definition}
+    Symmetric key ciphers: same key to encrypt/decrpyt (stream/block ciphers)
+
+    \begin{itemize}
+        \item Stream ciphers: similar to OTP: key used to generate pseudo-random sequence of bits and then XOR'd with plaintext. Runs a bit at a time which is good for streaming. Suffers from synchronization problems
+
+            \begin{figure}[H]
+                \centering
+                \includegraphics[width=0.8\linewidth]{img/image_2023-01-30-19-43-53.png}
+            \end{figure}
+        \item Block ciphers: encrypt/decrypt a block of bits at a time (usually 64 bits or a multiple). Add padding if necessary.
+
+            \begin{figure}[H]
+                \centering
+                \includegraphics[width=0.8\linewidth]{img/image_2023-01-30-19-44-04.png}
+            \end{figure}
+    \end{itemize}
+
+
+\end{definition}
+
+Stream ciphers are generally simple and fast. Block ciphers are more common just due to the history of cipher development (closed-source stream ciphers and a proliferation of open-source block ciphers)
+
+
+\subsubsection{Block Ciphers}
+
+\begin{itemize}
+    \item Data Encryption Standard (DES): 56 bit key, 64 bit block.
+    \item AES (Advanced Encryption Standard) -- official standard encryption algorithm for the US government in 2000
+    \item Both are iterated block ciphers
+    \item Today's computers are fast enough that DES is considered insecure
+\end{itemize}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-02-10-00-07-50.png}
+    \caption{DES Feistel Ntwork}
+\end{figure}
+\begin{itemize}
+    \item Input is split between left and right haves. Some computation involving a portion of the key is done on the right half and then the left and right halves are swapped, then the output gets piped back into this process. This "round" is repeated 16 times.
+    \item 56 bit key is put through a schedule to create sixteen subkeys. 56-bit into 2 28 bit halves, then shifted left by 1 or 2 bites, and 2 24 bits are then selected from the halves to make a 48 but subkey $ K_n $. Exact number of bit selections are carefully selected.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-02-10-00-10-31.png}
+    \caption{each $ f(R_{n-1}, K_n) $ does: 1. expansion permutation 2. XOR with subkey 3. non-linear S-box subsitution boxes to compress 48 to 32 bit 4. permutation}
+\end{figure}
+
+\marginnote{Design of S-boxes is important as this is the only part of the cipher that is non-linear}
+
+\begin{itemize}
+    \item DES is inadequate with modern computers: brute force can crack 56-bit keys in less than a day. A solution is to use a longer key length and chain DES multiple times; \textbf{3DES} w/ a 168 bit key split into 2 56 bit times and running the algorithm three times
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-02-10-00-19-51.png}
+\end{figure}
+
+
+Block cipher encryption modes, or how to encrypt data with multiple blocks:
+\marginnote{Considerations include security, performance, error propagation, and error recovery}
+
+\begin{itemize}
+    \item Electronic Cookbook (Simplest): break down into block-sized chunks \& pad if necessary. Encrypt each block separately.
+        \begin{itemize}
+            \item Highly parallelizable  but not secure
+            \item Cipher blocks can reveal macro structure of plaintext data since same plaintext blocks will always encrypt to the same ciphertext blocks
+                \begin{figure}[H]
+                    \centering
+                    \includegraphics[width=0.8\linewidth]{img/image_2023-02-10-01-29-44.png}
+                \end{figure}
+            \item Error propagation doesn't happen \& error recovery only requires retransmission of affected blocks and does not stop decryption
+        \end{itemize}
+    \item Cipher block chaining
+        \begin{itemize}
+            \item Every block's input is dependent on output of previous block. Initial value does not have to be secret but shouldn't be reused for multiple messages
+            \item Good security but poor parallelism for encryption\mn{decryption can be parallelized}. Transmission error only affects current and following block -- and as for recovery the receiver can drop affected blocks and still continue decryption.
+        \end{itemize}
+    \item CFB (Cipher-feedback) and OFB (Output feedback) convert block ciphers into stream ciphers, i.e. can be decrypted/encrypted in less than a full block at a time. Similar to stream ciphers (Discussed later.) In OFB the key stream is independent of plaintext so cipher operations can be done in advance
+\end{itemize}
+
+
+
+
+\subsubsection{Stream Ciphers}
+
+\begin{itemize}
+    \item Encryption/decryption with low latency, i.e. multimedia streams
+    \item Operate one bit at a time
+    \item Closely related to one-time pads
+    \item No modes: can be used to encrypt data of any length
+    \item Synchronous stream ciphers: key stream is independent of message text. State is modified by $ f $ and the key; each step uses feedback in which $ f $ uses current state to produce the new state. Transmission error only affects the corresponding plaintext bits
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.8\linewidth]{img/image_2023-02-06-18-43-03.png}
+        \end{figure}
+    \item Self-synchronizing stream ciphers: key stream is dependent on the plan test. State is a shift register; every ciphertext bit created is shifted into the shift register and fed back as input into the key function $ g $. So each ciphertext bit as an effect on the next $ n $ bits\mn{$ n $ is the length of the shift register}
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.8\linewidth]{img/image_2023-02-10-01-39-48.png}
+        \end{figure}
+    \item Similar properties to the one time pad; dangerous to use the same keystream to encrypt multiple messages
+    \item Synchronous stream ciphers must have changed keys or initialization vectors after every message. Self-synchronizing stream ciphers must have random data inserted at the beginning.
+    \item Malleable; ciphertext can be changed to generate related plaintext.
+    \item Adversaries can replay previously sent ciphertext into a stream and the cipher will resync.
+    \item Synchronous stream ciphers cannot be recovered unless we know exactly how much ciphertext is lost because the keystream is independent of the plaintext.
+        Self-synchronizing ciphers will recover after $ n $ bits pass.
+\end{itemize}
+
+Common ciphers used include RC4 and SEAL. 
+RC4 is now publicly known but license is required to use it
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-02-10-01-42-54.png}
+    \caption{RC4 Implementation. TLDR: Use a state represented by an array of 256 chars. Use a pseudo-random generator and the state to generate the keystream.}
+\end{figure}
+
+
+Stream ciphers offer better performance but are more difficult to use safely. Block ciphers are easier and more commonly used. Nowadays just use AES \& CBC is most common encryption mode for arbitrary data. ECB is safe for short chunks of data where plain text is unlikely to repeat.
+
+
+
+
+\subsection{Key Exchange}
+\begin{itemize}
+    \item Symmetric key encryption requires both parties to have the same key
+    \item Key exchange must be communicated securely; if not, the key is compromised
+    \item Pre-sharing keys is one alternative; i.e. setting keys at production time. But this is not practical for large systems; $ n $ people need a total of $ n\frac{n-1}{2} $ keys
+\end{itemize}
+
+\subsubsection{Trusted third-party}
+
+Idea: have a trusted keyserver that knows everyone's keys.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-02-10-16-43-12.png}
+\end{figure}
+\begin{itemize}
+    \item A tells T that it wants to communicate with B
+    \item T sends A a session key $ K_{AB} $ and encrypts it once with A's key ($ (K_{AB})_{K_A} $) and once with B's key
+    \item A will decrypt it's own copy of the session key with it's own key and then send the other key to B
+    \item B can now decode the session key with it's own key. Now A and B can communicate securely
+\end{itemize}
+
+This procedure is susceptible to a third party attacker who may capture the session key $ A $ sends to $ B $ as well as other messages. The attacker can then replay messages to make $ B $ repeat an action; $B  $ can't tell if the message actually came from $ A $
+
+
+\begin{definition}
+    Needham-Schronecker protocol: a protocol for key exchange between two parties $ A $ and $ B $ that is secure against a passive eavesdropper by using a \textbf{nonce} 
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-02-10-16-55-54.png}
+    \end{figure}
+
+    \begin{itemize}
+        \item Messages include recipient and sender
+        \item Receiver keeps track of sent Nonce values to prevent replay attacks
+        \item Some action performed on the Nonce proves to the sender that the recipient is alive. Often just adding/subtracting a constant from the nonce\mn{Multiplication or division is discouraged due to the nature of many of these algorithms}
+    \end{itemize}
+
+Trusted third party has a problem: because the system trusts the central server, if the server is compromised, the entire system is compromised.
+
+\end{definition}
+
+
+\subsubsection{Diffie-Hellman Key Exchange}
+
+\begin{itemize}
+    \item Can be used by two parties to establish a common secret over an insecure link
+    \item Assumes that the discrete logarithm problem is hard (modular arithmetic in a finite field)
+        \begin{itemize}
+            \item Limited set of $ n>1 $ elements, each with an additive inverse $ x + x' = 0 $ and each nonzero element has a multiplicative inverse $ x \cdot  x' = 1$
+            \item Recall: Modular arithmetic is the same as addition and multiplication but with the result rounded by the modulus of $ n $, i.e if our system has a modulus of $  7 $ then $ 4+3 = ((4+3)\%7) = 0$.
+            \item There are no negative numbers or factions in modular arithmetic, so additive and multiplicative inverses are as follows:
+                \begin{itemize}
+                    \item E.x. the additive inverse of $ 4 $ is $ 3 $; $ 4 + 3 = 7 \rightarrow 7 \% 7 = 0 $
+                    \item Multiplicative inverse of $ 5 $ is $ 3 $; $ 5 \cdot 3 = 15 \rightarrow 15 \% 7 =  1 $
+                \end{itemize}
+            \item Modular arithmetic in a finite field will only work if the modulus is prime
+        \end{itemize}
+    \item  $ 4^3 \% 7 = 64 \% = 1 $, $ \log_4 1 \% 7 = 3 $
+    \item What is the discrete log of $ \log_3 5 \% 7 $? I.e. finding $ x $ such that $ 3^x \% 7 = 5 $. Must try all possible values of $ x $ until we find the correct one (and do the exponentiation!).
+        \begin{itemize}
+            \item Complexity of finding the log is $ NP-hard $
+        \end{itemize}
+\end{itemize}
+
+\begin{definition}
+    Initialization: Alice selects $ n $, a large prime modulus and $ g $, a generator of the field $ n $ that lies between $ (1, n-1) $\marginnote{Generator selection is discussed in texts on the subject. A number $ g $ is a generator of $ n $ if for each $ y $ between $ 1, n-1 $ there exists an $ x $ such that $ g^x \% n = y $, i.e $ g^0, g^1, \ldots g^{n-1}$ yields all numbers from $ 1 \ldots n-1 $}
+
+    \begin{itemize}
+        \item Alice selects a random integer $ x $ and computes $ P = g^x \% n $
+        \item Alice sends $ P, g, n $ to Bob and keeps $ x $ to herself
+        \item Bob selects a random integer $ y $ and computes $ Q = g^y \% n $
+        \item Bob sends $ Q $ to Alice and keeps $ y $ to himself
+        \item Alice and bob may now both compute the secrete $ Q^x \% n \equiv  P^y \% n \equiv g^{xy} \% n $
+    \end{itemize}
+
+\end{definition}
+
+The Diffie-Hellman attack is vulnerable to man-in-the-middle attacks.
+If an adversary Eve can pretend to be Bob when communicating with Alice and pretend to be Bob when communication with Alice, then Eve can establish a shared secret with each of them without Alice or Bob being any wiser -- thereby snooping on on their communication!
+
+The problem with this key exchange protocol is that it does not identify the remote party; though the communication is secure we have no clear way of knowing if we are really corresponding with who we think we are.
+
+
+
+\subsubsection{Public Key Cryptosystems}
+Public key cryptosystems use a pair of keys to establish an asymmetric cryptosystem. The private and public keys reveal nothing about each other, but share the property that messages encrypted with one key can only be decrypted with the other.
+Users keep one `private' key secret and one `public' key, well, public. Then during encryption the sender may encrypt the messages with the intended recipient's public key and the recipient can decrypt the message with their private key.
+And since only the recipient can decrypt the message, the sender can be sure that the message is only being read by the intended recipient.
+
+Setting up a key exchange using a public key system is straightforward; Alice can encrypt a key $ x $ using Bob's public key and send it to Bob. Bob can then decrypt the key with his private key and now they have a shared key $ x $!
+Two popular public key cryptosystems are RSA\mn{Factoring} and DSA (Digital Signature Algorithm)\mn{Discrete logs}
+
+
+
+\begin{definition}
+    \textbf{RSA} algorithm
+
+    \begin{enumerate}
+        \item Pick $ n $ that we can use as basis for the modular space. RSA key generation begins by picking two very large prime numbers $ p $ and $ q $ and computing $ n = p \cdot  q $. $ n $ can be publicky shared since there's no known algorithm to efficiently recover $ p, q $ from $ n $. \mn{Size of $ n $ defines key size; i.e. 4096 bit RSA uses 4096 bits to represent $ n $}
+        \item Pick our public key\mn{Via Euler's Theorem}. Define $ \phi = (p-1)(q-1) $. Pick $ e $ that is \textit{coprime}\mn{$ a, b $ are coprime if $ 1 $ is the only positive integer that evenly divides both of them} to $ \phi $; this will be our public key.
+        \item  A message $M$ can be encrypted into a cryptotext message $ C $ via $ C = M^e \% n $. $ e, n, C$ can be made public, $ p, q, \phi $ must remain secret. Note that $ M < n $ or else RSA doesn't work.
+        \item Calculate our private key, i.e. need a private key $ d $ that is the multiplicative inverse of the public key $ e $: $ e*d = 1 \% \phi $. This $ d $ can be found efficiently through the extended euclidean method\mn{Google this, not needed for the course}. $ d $ must remain private. Also, no-one else can find $ d $ since they don't know $ \phi $.
+        \item Recover $ M $ via the private key
+            \begin{itemize}
+                \item $ M = C^d \% n = (M^e \% n)^d \% n = M^{e \cdot d} \% n $
+                \item Since $ e \cdot  d = 1 \% \phi  \Rightarrow (e \cdot  d) = (k \phi + 1) $ for some integer $ k $
+                \item $ M^{k \phi + 1} \% n = M^{k \phi} \cdot M \% n = (M^{k\phi \% n } \cdot M \% n) $
+                \item Euler's theorem tells us that $ a^{\phi} = 1 \% n $
+                \item = $ 1 \cdot M \% n = M $ since $ M < n $
+            \end{itemize}
+    \end{enumerate}
+\end{definition}
+
+
+
+RSA has very poor resistance to spoofing since the encryption uses exponentiation; $ encrypt (K \cdot  M) = (K \cdot M)^d = K^d + M^d = encrypt(K) \cdot encrypt(M) $.
+
+Recall that a message is signed by encrypting the message with the sender's private key. The receiver can then decrypt the message using the sender's public key to show that the public key is really yours.
+If someone will sign messages the adversary gives them then the adversary can trick them into signing messages that they don't want to sign.
+Suppose a victim will not sign $ M $ but the adversary can pick $  K $ and get the victim to sign $ K \cdot  M $ and $ K $. Then $ M $ may be recovered.
+
+
+
+Public key cryptography also doesn't prevent man-in-the-middle attacks. If Eve can pretend to be Alice to Bob and pretend to be Bob to Alice, then Eve can snoop without either of them being any the wiser; despite being able to sign a message with one's private key, public key cryptography still suffers from an attacker passing off their public key and signature as someone else's.
+This can be resolved through the introduction of a trusted third party who can vouch for the identity of a key.
+This trusted third party is called a \textbf{certificate authority} (CA) and they are responsible for issuing certificates using their own private key saying that a public key belongs to a particular person.
+Bob and Alice can then use this certificate to verify that they are communicating with the right person.
+
+
+\begin{itemize}
+    \item Common standard format is $ X509 $ and is used in SSL. Public infrastructure allows using a chain of certificates to verify the identity of a key issued by a hierarchy of certificate authorities.
+    \item Are we going back to the trusted central server that we were trying to avoid? Yes, sort of. But now the CA is trusted by the public and is not necessarily a single point of failure.
+\end{itemize}
+
+An alternative to having a central trusted party is to use $ PGP $; pretty good privacy. This approach builds a web of trust by leveraging the fact that every user is capable of signing certificates and that trust is transitive. If $ A $ can verify that a public key belongs to $ B $, then $ A $ can create a certificate for $ B $ using $ A $'s private key. Then if $ C $ can verify $ A $'s public key then $ C $ can sign a certificate saying so with their private key.
+
+Then we've established a chain of trust from $ C \to  A \to  B$ and so on. If I can trust $ C $ then I can transitively trust $ A  $ and $ B  $ as well. If I trust $ A $ only then I can trust $ B $ but not $ C $. 
+
+
+This all sounds great until you realize that the web of trust is only as strong as the weakest link. If $ C $ is compromised then the entire web of trust is compromised as well. 
+This is why it's important to have the ability to \textbf{revoke} certificates.
+Revocation certificates are usually created as a dual to the certificate first created for the public key, and should be stored safely so that an adversary can't falsely issue a revocation. They also shouldn't be self-signed.
+Revocation lists are made public and should be referenced when verifying a certificate. If a certificate is revoked then the certificate is no longer valid.
+
+
+
+
+
+Common techniques when sending messages using public keys include:
+
+\begin{itemize}
+    \item To encrypt a message: simply encrypt the message with the recipient's public key.
+    \item To prove that a message is coming from you, sign the message with your private key and send the signature along with the message.
+    \item To prevent replay attacks, include a nonce (usually just an increasing number) in the message and sign the nonce along with the message.
+\end{itemize}
+
+
+\subsection{Hashes}
+
+
+\begin{itemize}
+    \item A one-way function that converts a large input into a small, typically fixed size output
+    \item Low probability of collision; $ H(m) = h $
+    \item Can be thought of as a "fingerprint" of the input
+    \begin{itemize}
+        \item $ m $ is the preimage/input to hash
+        \item $ h $ is the hash value or message digest
+        \item $ H $ is a lossy compression function
+    \end{itemize}
+\end{itemize}
+
+A good hash function should have the following properties:
+\begin{enumerate}
+    \item \textbf{Preimage resistance}: Given $ h $, it should be computationally infeasible to find $ m $ such that $ H(m) = h $
+    \item \textbf{Second preimage resistance}: Given $ m $, it should be computationally infeasible to find $ m' $ such that $ H(m) = H(m') $
+    \item \textbf{Collision resistance}: It should be computationally infeasible to find $ m, m' $ such that $ H(m) = H(m') $
+\end{enumerate}
+
+Assuming that the length of the hash is $ n $ bits, then 
+
+\marginnote{It is also desirable for small changes in the input to result in large changes in the output. }
+
+\begin{itemize}
+    \item Second Preimage resistance: $ 2^{n-1} $
+    \item Collision resistance: $ 2^{n/2} $ (birthday attack)
+\end{itemize}
+
+\marginnote{MDC (modification detection code) is a hash function that is used to detect changes in a message.}
+
+One way to make sure that a message is passed with integrity is to send a hash of the message along a secure channel and then have the receiver recompute the hash and compare it to the one sent. If they are the same then the message was not modified in transit.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-02-13-18-39-54.png}
+\end{figure}
+
+If confidentiality is required the communicators may want to encrypt the message.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-02-13-18-41-31.png}
+    \caption{Combining MDC with encryption to ensure integrity and confidentiality}
+\end{figure}
+
+Nowadays just use SHA256 (SHA2)\mn{MD5 and SHA1 are deprecated}.
+
+
+
+\begin{definition}
+    \textbf{MAC}: A message authentication code uses a hash to provide integrity and authentication.
+
+    A MAC is constructed as $ h = H(k, M) $ where $ k $ is the secret key and $ M $ the message. The receiver knows that whoever generated the MAC must also know the key, thus authenticating the message source.
+\end{definition}
+
+
+MACs are often constructed from symmetric ciphers.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-02-13-19-10-15.png}
+    \caption{CBC-MAC}
+\end{figure}
+
+This method is similar to CBC encryption for block ciphers except a single hash value is produced at the end. Hash size is the same as the block size of the block cipher.
+The MAC key must also be different from the encryption key\mn{This is bad practice and can produce a vulnerability depending on your encryption schemes and their interactions}.
+
+A MAC can be constructed by concatenating the secret key with the message and using a mash, which creates a keyed-hash MAC (HMAC)
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-02-13-19-14-44.png}
+    \caption{HMAC creation}
+\end{figure}
+
+An inner and outer hash gets rid of the extension problem since this requires the inner hash to be extended as well (which is encrypted!).
+HMACs are a reliable way to give strong signatures to messages.
 
 
 
 
 
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-02-13-19-18-04.png}
+    \caption{HMAC process (opad and ipad are flipped here relative to RFC 6328)}
+\end{figure}
 
 
+\subsubsection{Hash-based data structures}
 
+\begin{itemize}
+    \item It is often useful nowadays to have a data structure that can be updated in a secure way and to verify the integrity of a set of things instead of a single object.
+\end{itemize}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-02-13-19-23-05.png}
+    \caption{Merkle Tree}
+\end{figure}
 
+\begin{blockquote}
+   Consider we have a bunch of data that we want to keep track of (Data blocks, lowest level of tree in diagram). We can hash all of them and then build a binary tree from the bottom up of the hashes. A parent of two nodes will take on the hash value of the concatenated hash of the it's children. And then the root node would have the hash of everything.
+   The reason why this is better than concatenating all the data blocks and then hashing it together is that the individual blocks we're hashing is a lot smaller and changing a block won't require rehashing along the entire set of data blocks; you will only have to hash $ \log_2 n $ times; from the data block up to the root. 
+   The top hash is a hash of all the data blocks and can be used to verify the integrity of all the data we're looking at.
 
-
-
-
-
-
-
-
+\end{blockquote}
 
 
 \end{document}

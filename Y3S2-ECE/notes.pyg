@@ -1,0 +1,8 @@
+p = malloc(128);
+q = malloc(128);
+free(p);
+free (q);
+p = malloc(256);
+// this is where the attack happens; the fake tag, shell code, etc
+strcpy(p, attacker_string);
+free(q);
