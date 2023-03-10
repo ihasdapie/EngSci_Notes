@@ -7,6 +7,11 @@
 
 \section{ECE353 Operating Systems}
 
+\begin{blockquote}
+    Examples and some figures taken from Prof. Jon Eyolfson's ECE353 slides and notes (https://eyolfson.com).
+\end{blockquote}
+
+
 \subsection{Kernel Mode}
 \subsubsection{ISAs and Permissions}
 
@@ -1154,17 +1159,301 @@ int main(void) {
     For gcc we can see the tac by using the \texttt{-fdump-tree-gimple} or \texttt{fdump-tree-all} flags.
 \end{definition}
 
-Let's consider an example:
+Let's consider some GIMPLE code produced from a function that increments an integer stored at address \texttt{pcount}
+
+\begin{listing}[H]
+\begin{minted}{text}
+D.1 = *pcount;
+D.2 = D.1 + 1;
+*pcount = D.2;
+\end{minted}
+\end{listing}
 
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-13-21-55.png}
+    \caption{Pre-emption possibilities. Let's say we have a producer-consumer model with read/write from two threads. There are many possible orderings of these GIMPLE'd instructions, of which some produce undesirable results}
+\end{figure}
+
+\begin{listing}[H]
+\begin{minted}{c}
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+// or: pthread_mutex_t m; pthread_mutex_init(&m2, NULL)
+
+pthread_mutex_lock(&lock);
+// ... critical section: only one thread can access at a time
+pthread_mutex_unlock(&lock)
+// careful: deadlocks can happen with multiple mutexes.
+
+pthread_mutex_trymutex(&lock); // returns 0 if it was able to lock, otherwise an error code
+
+pthread_mutex_destroy(&lock)
+\end{minted}
+\end{listing}
+
+How are these implemented?
+
+A naive implementation may look as follows:
+
+\begin{listing}[H]
+\begin{minted}{c}
+void init(int *l) { *l = 0; }
+
+void lock(int *l) {
+while (*l == 1);
+*l = 1;}
+
+void unlock(int *l) { *l = 0; }
+\end{minted}
+\end{listing}
+
+However, this is 1) not safe (both threads can be in the critical section) and not efficient due to the busy wait.
 
 
+\marginnote{Hardware requirements to implement software locks: atomic load and stores, and instructions execute in order}
 
+Better approaches include Peterson's algorithm and Lamport's bakery algorithm. They have some scalability issues and processors may not execute in order.
+
+
+Here's another attempt using a magical atomic function: \texttt{compare\_and\_swap} which returns the original value pointed to, and only swaps if the original value equals old and changes it to new.
+
+\begin{listing}[H]
+\begin{minted}{c}
+void init(int *l) { *l = 0; }
+void lock(int *l) { while (compare_and_swap(l, 0, 1)); }
+void unlock(int *l) { *l = 0; }
+\end{minted}
+\end{listing}
+
+\marginnote{\texttt{compare\_and\_swap} is commonly implemented in hardware; on x86 platforms this is implemented using the \texttt{cmpxchg} instruction}
+
+This solves the concurrency issue however it still is not efficient due to the busy wait.
+
+\begin{listing}[H]
+\begin{minted}{c}
+void lock(int *l) {
+while (compare_and_swap(l, 0, 1)) {thread_yield(); }}
+\end{minted}
+\end{listing}
+
+This is better, but still not ideal. Multiple threads waiting for an event can be awoken when the vent occurs, but only one will win\mn{thundering herd problem}. This cycle will repeat until the herd dies down, but not without causing many freezes along the way. Some sort of order must be placed on the herd -- maybe a FIFO queue?
+
+
+\begin{listing}[H]
+\begin{minted}{c}
+void lock(int *l) {
+while (compare_and_swap(l, 0, 1)) {
+    // add myself to the lock wait queue
+    thread_sleep(); }}
+void unlock(int *l) { *l = 0;
+if (/* threads in wait queue */) {
+    // wake up one thread
+}}
+\end{minted}
+\end{listing}
+
+However this suffers from two issues: 1) lost wakeup and 2) wrong thread getting the lock
+
+Consider T1, T2 with T2 holding the lock; what if the context gets switched to T2 before T1 is able to successfully add itself to the wait queue? Then T1 will never get woken up since when T2 unlocks T1 will not be in the wait queue.
+
+Let's consider another scenario: we have three threads T1, T2, and T3, and T2 is holding the lock with T3 in T1 in queue to lock the lock (with T3 before T1). 
+T2 may try to wake up the lock, but if the OS swaps to T1 before T2 can wake up T3, then T1 will acquire the lock before T3 does; T1 stole the lock from T3.
+
+
+A lock-guard pair can be used to fix these problems
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-13-52-58.png}
+    \caption{A lock-guard pair can be used to make the \texttt{lock} and \texttt{unlock} functions atomic themselves to avoid ugly synchronization issues like those mentioned above}
+\end{figure}
+
+
+However, this does not solve the data race problem: what if a thread gets interrupted right before \texttt{thread\_sleep} (but after being added to the wait queue). So a \texttt{thread\_wakeup} may try to wakeup a thread that isn't sleeping yet.
+ A solution may be to poll \texttt{thread\_wakeup}, but this falls back into the busy waiting problem we had before.
+
+A data race is when two concurrent actions access the same variable and at least one of them is a write; we can have as many readers as we want.
+
+Read-write locks (\texttt{pthread\_rwlock\_t} \& co.) are designed to capture this behaviour; multiple threads can hold a read lock (\texttt{pthread\_rwlock\_rdlock}) but only one thread can hold a write lock (\texttt{pthread\_rwlock\_wrlock}) and will wait until current readers are done.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-14-02-08.png}
+    \caption{rwlock impl}
+\end{figure}
 
 
 
 \subsection{Semaphores}
 
+Locks (mutexes) enforce \textit{mutual exclusion}, but not necessarily ordering.
+But how can we ensure an ordering between two threads?
+For example, how can we make one thread always print first?
+
+\begin{definition}
+    \textbf{Semaphores} have a value\mn{Usually an integer $ \ge 0 $} that is shared between threads and provide two operations: \texttt{wait} (atomic decrement, blocking) and \texttt{post} (atomic increment).
+    Initial \texttt{value} can be set to whatever.
+\end{definition}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-14-08-18.png}
+    \caption{Semaphore methods. \texttt{pshared} can be set to 1 for IPC (needs to live in shared mem for IPC)}
+\end{figure}
+
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-14-09-35.png}
+    \caption{A snippet that uses semaphores as signals to \texttt{print\_first} first and \texttt{print\_second} second}
+\end{figure}
+
+
+\marginnote{
+    A semaphore is really a generalized mutex; we can consider a mutex as a semaphore with a value of 1.
+}
+
+Let's consider the \textit{producer-consumer} problem:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-14-11-55.png}
+    \caption{All consumers share index $ i_c $, and all producers share index $ i_p $ }
+\end{figure}
+
+
+We can ensure producers never overwrite filled slots by using a semaphore to track the number of empty slots;
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-14-14-32.png}
+    \caption{Consumer \texttt{post}-s to the empty slots semaphore when done and producer \texttt{wait}-s on the empty slots semaphore before writing}
+\end{figure}
+
+A similar semaphore can be used to track the number of filled slots such that consumers never read empty slots;
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-14-15-49.png}
+    \caption{Two semaphores ensure proper order}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-14-32-50.png}
+    \caption{Note: Initializing both semaphores to 0 will cause the program to hang because none of the producers will be able to produce anything and then the program just gets stuck}
+\end{figure}
+
+\subsection{Locking}
+
+Languages offer support for locking and syntactic sugar. For example, java offers the \texttt{synchronized} keyword:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-14-37-02.png}
+\end{figure}
+
+Another abstraction on top of these synchronization primitives are \textit{condition variables} which enable inter-thread signaling.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-14-38-47.png}
+\end{figure}
+
+These condition variables must be paired with a mutex\mn{One mutex can protect multiple condition variables}; any calls to wait must already hold it (but signal/broadcast may not).
+The mutex is used to protect the condition variable itself, i.e. to prevent undesirable state changes in the condition variable due to synchronization problems.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-14-44-09.png}
+    \caption{Condition variables offer a more elegant solution to the producer-consumer problem}
+\end{figure}
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-14-45-57.png}
+    \caption{Example: This piece of code is a problem because there is no mutex on the \texttt{condition=true} line which can cause the \texttt{while} to produce undesired behaviour. Consider the case where if thread 1 executes first and then it gets swapped away right at the first $ !condition $. Then in thread 2 the condition is to be set to true and the signal is sent without anything happening -- which causes the \texttt{pthread\_cond\_wait} to hang. This can be fixed by locking and unlocking around the \texttt{condition=true} and \texttt{signal} lines.}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-14-53-14.png}
+    \caption{Can we change the \texttt{while} to an \texttt{if}?}
+\end{figure}
+
+What if we want to avoid polling by changing the \texttt{while} to an \texttt{if}? A problem may occur here.
+
+\begin{enumerate}
+    \item T1 goes first w/ initial condition false, cond 0, mutex 0
+    \item T1 locks mutex, so no races to worry currently
+    \item Put ourselves into condition variable's wait queue, and then unlock mutex
+    \item Thread 2 runs: locks mutex, sets condition to true, unlocks, and signals
+    \item Thread 1 can now wake up, condition is true, and then it can continue working
+    \item But Thread 3 can also wake up, set condition to true, and then transfer context to T2 which signals to T1.
+        \begin{itemize}
+            \item Now T1 wakes up and by the time it gets to the \texttt{unlock} \texttt{condition} is false, which is a problem (since we wanted \texttt{condition} to be true T1 unlocks (as per the if statement))
+        \end{itemize}
+\end{enumerate}
+
+
+
+
+
+
+Semaphores can be thought of as a special case of condition variables: though one can be implemented with the other it can get messy. Complex conditions are generally implemented with condition variables to keep things clean.
+
+\begin{definition}
+    \textbf{Locking Granularity} is the extent to which a lock is held. Too many locks or locks covering large swathes of the program can slow down your program, so it's important to design critical sections carefully. 
+\end{definition}
+
+
+\subsection{Deadlocks}
+Deadlocks are a problem. Conditions for deadlocks include:
+
+\begin{itemize}
+    \item mutual exclusion
+    \item hold and wait (have a lock and try to acquire another)
+    \item No preemption (can't take simple locks away)
+    \item circular wait (waiting for a lock held by another process)
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-14-58-38.png}
+    \caption{This can deadlock depending on the order of the processes trying to get the locks!}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-14-59-08.png}
+    \caption{Enforcing order is one way to prevent deadlocks}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-14-59-23.png}
+    \caption{Alternatively, \texttt{try\_lock} can be used to self-pre-empt in order to avoid deadlocking}
+\end{figure}
+
+
+See the \texttt{banksim.c} example
+
+
+// TODO: take exercpts from banksim
+
+
+\begin{blockquote}
+    Note from review session: \texttt{fork} from a \texttt{pthread} will fork with just the calling thread.
+\end{blockquote}
 
 
 \end{document}

@@ -1375,6 +1375,31 @@ Which corresponds to the following matricies
     \label{eq:lp1}
 \end{equation}
 
+Geometrically we may understand LPs as some sort of $ n $-dimensional polyhedron comprised of the intersection of the halfspaces defined by the hyperplanes each inequality represents.
+In more simple terms: each inequality defines a supporting hyperplane $ \left\{ x \in \mathbb{R}^n : a^Tx = b \right\}  $ One \textit{halfside}, $ \left\{ x \in \mathbb{R}^n: a^T x \le  b \right\}  $ of the hyperplane gives admissible solutions to the inequality.
+The polyhedron that contains all of the solutions to the inequality is then given by the intersection of all the hyperplanes in the set.
+A polyhedron $ P $ is \textit{unbounded} when there exists a point $ x $ such that $ x \in P $ and a direction $ v $ for which for every $ t \ge  0 $, $ x + tv \in P $. A bounded polyhedron, i.e. not unbounded is a \textit{polytope}.
+
+\begin{definition}
+Formally a \textbf{face} of a polyhedron is a set of the type 
+
+\begin{equation}
+    F = \left\{  x : Ax \le  b \right\}  \cap \left\{  x : a_ix = b_i \forall i \in S \right\}
+\end{equation}
+
+Where $ a_i $ is the $ i $th row of $ A $ and $ S $ is some subset of the rows of $ A $. 
+
+A {j-face} is a face where the rank of the sub-matrix $ A_f $ of $ A $ for that face is $ n-j $. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-16-28-53.png}
+    \caption{In this example the triangle $ \left\{ (1,0,0), (0,1,0), (0,0,1) \right\}  $ is a facet (2-face); $ F = P \cup \left\{ x_1 + x_2 + x_3 = 1 \right\}  $. The edge $ F_1 $ or $ F_2 $ is a 1-face, and the vertex $  v $ is a 0-face}
+\end{figure}
+ 
+    
+\end{definition}
+
 
 
 \begin{definition}
@@ -1430,6 +1455,114 @@ Recall that some vertex $ v \in P $ is an optimal solution to the LP, i.e. $ c^T
     Many proofs involving convex hulls may be partially resolved with the fact that the convex hull of two points is the line between them, and a little bit of induction.
 \end{definition}
 
+\subsubsection{LP Examples}
+
+\begin{blockquote}
+    In order to use linear programming we must need to know how to frame questions as LP questions.
+\end{blockquote}
+
+\begin{example}
+    Menu planning
+
+    Given the following list of prices \& nutritional values for a set of foods, find the minimum additional price for dish to meet nutritional requirements?
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-16-37-59.png}
+    \end{figure}
+
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-16-38-07.png}
+    \end{figure}
+
+    The minimization is simply the price multiplied by the amount. The constraints can be described as follows:
+
+    \begin{itemize}
+        \item There should be non-zero carrots, white cabbage, and pickles
+        \item The sum of vitamin A across the dish should be at least 0.5mg
+        \item And so forth...
+    \end{itemize}
+
+\end{example}
+
+\begin{example}
+    Network flow
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-16-40-21.png}
+    \end{figure}
+
+    What is the maximum transfer rate from the old computer $ o $ to the new computer $ n $?
+
+    Let's introduce a variable $ x_{ab} $ which specifies the rate at which data is transferred from $ a  $ to $ b $ for each link in the network. In this graph we have 10 such variables.
+
+    The linear program is then as follows
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-16-42-20.png}
+    \end{figure}
+
+    Our goal is to maximize the flow out of computer $ o $ under the assumption that, since the data is neither stored or lost, it must be received by $ n $ at the same rate.
+    The next constraints restrict the transfer rates along each of the individual links, i.e. $ x_{cd} $ can transmit at a rate of up to $ 4  $ forwards or backwards ($ -4 \le  x_{cd \le  4}$).
+    The relations between the nodes are then captured in the last few equality constraints and effectively say that whatever leaves each node must leave it immediately \mn{$ x_{oa} = x_{ab } + x_{ad}$; flow from $ o \to  a $ must leave through $ a $ to either $ b , d $}.
+
+
+\end{example}
+
+Consider the following problem: given a projected mostly ice cream sales for the next year, how can produce a production schedule with the minimum cost?
+
+\begin{example}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-16-47-17.png}
+    \end{figure}
+\end{example}
+
+A simple solution might be JIT\mn{just-in-time (heh)} production -- but this can be expensive due to temp workers and machine adjustments, etc. 
+It may be better to spread out production and to build up stock.
+
+
+Let's formalize this problem as follows:
+
+\begin{itemize}
+    \item Demand in month $ i $ is $ d_i $
+    \item $ x_i $ is the production in month $ i $
+    \item $ s_i $ is the total surplus in store at end of month $ i $
+    \item To meet demand in month $ i $ we may use the production in month $ i $ and the surplus from $ i-1 $; $ x_i + s_{i-1} \ge  d_i $
+    \item And the surplus after month $ i $ is $ x_i + s_{i-1} - s_i = d_i $
+    \item Assume initial surplus is $ s_0 = 0 $, and we want $ s_{12} = 0 $
+\end{itemize}
+
+Let's take the cost of changing production by 1 ton between two months to be $ 50 $ and the storage cost for 1 ton of ice cream is $ 20 $
+
+Total cost:
+
+\begin{equation}
+    50 \sum_{i = 1}^{12} |x_i - x_{i-1}| + 20 \sum_{i = 1}^{12} s_i
+\end{equation}
+
+This cost function is unfortunately not linear, but we can use the following trick to make it linear: since the change in production is either an increase or decrease, we may introduce $ y_i \ge  0 $ for the increase and $ z_i \ge 0 $ for the decrease to get
+
+\begin{equation}
+    x_i - x_{i-1} = y_i - y_z \qquad \text{and} \qquad |x_i - x_{i-1}| = y_i + z_i
+\end{equation}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-08-16-54-39.png}
+    \caption{The linear program that follows}
+\end{figure}
+
+
+
+
+
+
+
+
+
 
 \subsubsection{Duality}
 
@@ -1455,9 +1588,46 @@ If we were to multiply each inequality by half and add them up, we get
     x_1 + x_2 + x_3 \ge  \frac{3}{2}
 \end{equation}
 
+So here we were able to put a lower bound on the optimal value of the LP, but we don't know abut the upper bound. We can do this by using duality.
+Before we do that, here's the above logic formalized:
 
-So here we were able to put a bound on the 
+Given the $ LP $ in general form
 
+\begin{equation}
+    max c^T x \text{ s.t. } Ax \le  b \qquad x \ge 0
+\end{equation}
+
+We may apply the technique of dropping values and multiplying the inequalities used above.
+
+Let's define $ y \ge 0 $ as the dual variables which are applied onto the inequality as follows:
+
+\begin{equation}
+    y(Ax \le  b)
+\end{equation}
+
+\begin{blockquote}
+    Only multiply by non-negative constants to avoid messing up the inequalities
+\end{blockquote}
+
+Then,
+
+\begin{equation}
+    yAx \le  yb
+\end{equation}
+
+If every row of $ yA $ is greater than equal to $ c_i $, then the objective value is upper-bounded by $ yb $!
+
+And as it turns out this is just yet another linear program for minimization over choices of $ y $ that we can solve with our existing LP techniques.
+\marginnote{
+    if $ max c^Tx \text{ where }Ax \le  b, x\ge 0$ is the original LP, we call it the \textbf{primal} LP, and $ min b^Ty \text{ where } A^Ty\ge c, y \ge 0   $ is the \textbf{dual} LP. Refer to handout for more primal-dual pairs.}
+
+
+
+\begin{theorem}
+
+    If both primal and dual LPs are feasible, then their values are equal and the optimal value is the solution to either LP.
+    
+\end{theorem}
 
 
 
