@@ -1396,11 +1396,429 @@ HMACs are a reliable way to give strong signatures to messages.
 \end{figure}
 
 \begin{blockquote}
-   Consider we have a bunch of data that we want to keep track of (Data blocks, lowest level of tree in diagram). We can hash all of them and then build a binary tree from the bottom up of the hashes. A parent of two nodes will take on the hash value of the concatenated hash of the it's children. And then the root node would have the hash of everything.
-   The reason why this is better than concatenating all the data blocks and then hashing it together is that the individual blocks we're hashing is a lot smaller and changing a block won't require rehashing along the entire set of data blocks; you will only have to hash $ \log_2 n $ times; from the data block up to the root. 
+   Consider we have a bunch of data that we want to keep track of (Data blocks, lowest level of tree in diagram). We can hash all of them and then build a binary tree from the bottom up of the hashes. A parent of two nodes will take on the hash value of the concatenated hash of the it's children. And then the root node would have the hash of everything. The reason why this is better than concatenating all the data blocks and then hashing it together is that the individual blocks we're hashing is a lot smaller and changing a block won't require rehashing along the entire set of data blocks; you will only have to hash $ \log_2 n $ times; from the data block up to the root. 
    The top hash is a hash of all the data blocks and can be used to verify the integrity of all the data we're looking at.
 
 \end{blockquote}
+
+
+\subsection{Attacks on protocols}
+
+\subsubsection{Replay Attack}
+
+Suppose an attacker Calvin cannot create valid messages but they can record messages between Alice and Bob. If no replay protection is used, Calvin can simply replay the messages to Bob and pretend to be Alice. 
+For example consider a wireless deadbolt lock. If the lock is not protected against replay attacks, Calvin can simply record the messages between Alice and Bob and replay them to Bob to unlock the door.
+A common way to prevent replay attacks is to use a nonce; an unique one-time value appended to a message.A nonce is an unique value\mn{Random numbers are often used but it is usually preferable to simply use an incrementing counter as to avoid the client on having to store a ton of nonce values. Also, it's usually a bad idea to use time for nonce values; leap seconds exist and time is tricky.} 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-12-19-00-40.png}
+    \caption{Appending message with a nonce to prevent replay attacks. It's important that the hash value and message are both encrypted or included with the hash.}
+\end{figure}
+
+Counter also help prevent reordering attacks. An example of where a reordering attack can be dangerous is if we're controlling a drone; going forwards 10m and then to the right 10m is a different trajectory than going right 10m and then 10m forwards.
+One thing to note is that packets can arrive out of order which means that the nonce value may not come in the correct order -- so you need to keep track of the nonce values you've seen before. This is called a nonce cache.
+
+
+
+\subsubsection{SSL}
+
+The SSL protocol is a protocol for secure communication over the internet commonly used to secure web sessions\mn{And can be used to secure any application since it operates on regular sockets}.
+It is implemented as an application level library and is linked with both the client and the server. 
+It presents the same functionality as a socket but it encrypts the data before sending it and decrypts the data before receiving it -- the network doesn't need to have any security (i.e. SSL provides end to end security)
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-12-19-11-33.png}
+\end{figure}
+
+
+SSL includes two phases:
+
+\begin{enumerate}
+    \item Key exchange/handshake: checks versions, sets up secret key \& does auth. Only happens once, so it can be slow
+        \begin{itemize}
+            \item Establishes the ciphers each side supports and the version of the protocol. Establishes a shared secret key (session key). Authenticates each other's identifies via certificates. Note that this authenticates the machines and not the users. User auth is usually done by the web server. Nte that client auth is optional and not done for every SSL interaction since web servers generally connect to any client.
+        \end{itemize}
+    \item Communication: encrypts and decrypts data. Happens for every message. Needs to be efficient.
+\end{enumerate}
+
+
+\begin{blockquote}
+    You should keep your OpenSSL version up to date since there are known vulnerabilities in older versions and new vulnerabilities are discovered all the time.
+\end{blockquote}
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-12-19-26-10.png}
+    \caption{Note that the client hello is sent in plaintext, which means that a man in the middle can alter the list of ciphers it supports -- a downgrade attack. If the server is OK with any cipher then a man-in-the-middle could easily force it to pick an old and broken cipher -- which motivates the server picking the cipher. This step of the handshake is entirely completed in plaintext.}
+\end{figure}
+
+
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-12-19-40-24.png}
+    \caption{ The next step is the key exchange. This may look a little bit like our diffie-hellman section, at least in our goal to produce a shared secret in a secure manner. All following communication is then performed securely using that shared secret. }
+\end{figure}
+
+This handshake protects against: 1. spoofing via MAC, 2. reordering protection (nonce), 3. replay (nonce), 4. man-in-the-middle (certificate).
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-12-19-42-16.png}
+    \caption{Once we go into communication mode SSL has a few more tricks to protect against attacks. Note that compression is somewhat controversial since it can be used to leak information about the data being sent.}
+\end{figure}
+
+SSL generally doesn't impose much performance penalty on the actual communication layer since it's only encrypting and decrypting the data using a fairly fast symmetric block cipher. 
+However the serbver uses asymmetric decryption during handshake (which is about 1000x times slower than symmetric decryption). This means that for servers with a lot of SSL work to do are bottlenecked by the handshake.\mn{Consider situation when a server goes down and then a stampeding herd\mn{sort of?} of clients try to reconnect.}
+Dedicated hardware does exist to perform public key operations to speed up the handshake process.
+From a system architecture perspective it is common to set up servers in such a way for them to operate directly on cleartext and have a seperate SSL proxy server that handles the outside world.
+
+
+\subsubsection{SSL Demo}
+
+
+
+
+
+Here are some steps for setting up a web server and to create a certificate for it:
+
+
+\begin{listing}[H]
+\begin{minted}{bash}
+# we need to trust someone at first. With public key auth. we just need to trust that the certificate authority is giving keys to the right people.
+# We can also be our own certificate authority!
+
+#  request a new x509 certificate (cakey.pem)
+# - v3_ca tells it that this is a certificate authority
+# - give it a timeout and want 4096 bit key
+openssl req -new -x509 -extensions v3_ca -keyout cakey.pem -out cacert.pem -days 3650 -newkey rsa:4096
+
+# follow through with the prompts & optionally give the PEM a passphrase.
+# can read the keys with: (note this will prompt for passphrase)
+openssl rsa -in cakey.pem -text 
+
+# can read the certificate with:
+openssl x509 -in cacert.pem -text 
+
+# now let's make a key pair for our web server
+
+openssl genrsa -des3 -out server.key 2048
+
+# as the server let's request a certificate for our public key
+# from our CA; create a csr (certificate signing request)
+openssl req -new -key server.key -out server.csr
+
+
+# now we can sign the certificate for a year with our CA
+# serial is for keeping track of the certificates that we've signed
+openssl x509 -req -days 365 -in server.csr -CA cacert.pem -CAkey cakey.pem -CAserial serial.txt -CAcreateserial -out server.crt
+
+# now we've created server.crt which is the certificate that we'll give to the client to prove that the server is who it says it is, at least according to the CA
+
+\end{minted}
+\end{listing}
+
+
+Let's say we try to run a server with this certificate. The client, a web browser, will check the certificate to see if it is from a CA that it trusts. Unfortunately the CA we just isn't trusted (i.e. not in the client's trust keychain) so it won't be immediately useful for web serving.
+A use case where we may want a self-signed CA is if a company wanted to monitor all internet traffic for their employees. They could set up a proxy server that intercepts all traffic and then they could set up a CA and sign all of their employees' certificates. 
+And then add the CA's certificate to the trust keychain of all of their employees' computers. This way the employees' computers will trust the CA and will trust the certificates that the CA signs -- so the employees can access the internet as if everything is trusted by the company may watch the traffic and make sure that employees don't leak credit card information or something.
+
+In practice most CAs will have one top level key stored in an absurdly secure location and then they will have a bunch of subordinate keys that are used to sign certificates. The subordinate keys are stored in a secure location and the top level key is used to sign the subordinate keys. This way they can easily rescind subordinate keys if they get breached.
+
+
+\subsubsection{Web Authentication}
+
+It is impractical to require all users to use a certificate to identify themselves -- hence username/passwords.
+
+
+\begin{definition}
+    Cookie-based authentication
+
+
+    \begin{enumerate}
+        \item Browser asks for username and password and gives it to the server
+        \item On auth server generates a big random-looking number called a \textbf{HTTP cookie} and returns to the browser
+        \item Next time the browser visits the same server it will send the same cookie back to the server: the cookie is used as an authentication token
+        \item Web servers use cookies to authenticate the user as well as store session information, etc.\mn{If a cookie can be stolen before it expires it can be used to impersonate the user}
+        \item Should have a expiry time (limits damage from exposed cookies) and be as ephemeral as possible
+        \item Should be hard to forge a cookie and should not be used for authentication without SSL (or else they are easily stolen)
+    \end{enumerate}
+
+    A drawback of cookies is that they can raise privacy concerns; web servers can now track users' browsing habits within a site as well as across sites as well.
+    
+\end{definition}
+
+\marginnote{Recall: GET is used to read data from a server and POST is used to update data on a server. The line has been somewhat blurred in recent years.
+}
+
+Browser-based attacks are common and usually performed via some sort of cleverly formatted GET or POST requests to the server (with XSS).
+
+A GET request contains a header, a blank line, and the content. The POST is almost the same, except it requires a few more header fields to specify the content type and length.
+
+
+It is very common for sites to have web browsers execute small javascript programs, i.e. some logic to run \texttt{onclick} when a button is clicked.
+One way to exploit this is possibly to find a way to make the browser think that data is actually a program -- like buffer overflow attacks!
+
+
+\marginnote{\href{browserspy.dk}{browserspy.dk} is a website that shows you how much information your browser is leaking to websites.}
+
+
+
+Javascript can be used to read and steal data
+\begin{itemize}
+    \item Cookies can be read by JS by accessing the \texttt{document.cookie} variable
+    \item Script can incorporate the cookie data into a request to the attacker server and send it back
+    \item Protected via the \textbf{Same Origin Policy}: dictates that scripts from one origin (a web site) cannot access or set the properties of a document from another origin/website. 
+    \item URLs are treated as having the same origin if they are on the same protocol, hostname, and port number.. Browser isolates different sites into different identities. Note that domains under the control of the same organization, i.e. google.ca or google.com are not considered the same origin
+\end{itemize}
+
+Many sites include javascript from third-party sources, i.e. from ad networks. This opens up the possibility of cross-site scripting attacks.
+
+\begin{definition}
+    Cross-site scripting (XSS) is a vulnerability that allows a user to inject strip code into web pages viewed by other users. Allow for stealing cookies of a victom web site and more.
+
+    \begin{enumerate}
+        \item  Type 1/reflected: Attacker crafts url that targets a vulnerable site, attacker needs to click on url for a successful attack, web site is not modified
+        \item   Type 2/Persistent: Attacker posts malicious code on a vulnerable site, users must visit the site to be affected, web site is modified
+    \end{enumerate}
+\end{definition}
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-12-21-31-07.png}
+    \caption{What if some code is given to the browser to the browser instead of the name? I.e. as in the next slide?}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-12-21-32-01.png}
+    \caption{The victim website will execute the code and send the user's cookies to the attacker. By bouncing (reflecting) it off the server it looks like code that doesn't violate the same origin policy.}
+\end{figure}
+
+
+Generally XSS is a result of poor input validation.
+
+
+
+\begin{blockquote}
+Persistent XSS: Many sites want users to post their own content, which has conflicting requirements. They want to give users the ability to post rich content but also want to make sure that they don't post content that harms other users (XSS). Most sites will perform input validation (filtering) on user posts to remove code but still allow users to post rich content.
+\end{blockquote}
+
+
+
+
+Defenses against XSS
+
+\begin{itemize}
+    \item Convert all special characters before sending to an user, i.e. "<" -> "\&lt;a"
+    \item Whitelist characters (don't just blacklist -- too many characters to blacklist)
+    \item Use HTTP-only cookies (cookies that can't be accessed by javascript). This has the downside of limiting the functionality of the site.
+\end{itemize}
+
+
+
+\subsubsection{SQL Injection}
+Consider an insecure web application that allows users to look up their information by their USER ID
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-13-18-49-22.png}
+\end{figure}
+
+This may form a SQL query like this
+
+\begin{listing}[H]
+\begin{minted}{sql}
+select id, first, last from users where id = '%s'
+\end{minted}
+\end{listing}
+
+Is there a way for us to exploit the server not checking for apostrophes in the query? Consider the following query
+
+
+We insert \texttt{1' and 1 = 1 -- '}
+
+
+
+\begin{listing}[H]
+\begin{minted}{sql}
+select id, first, last from users where id = '1' and 1 = 1 --' 
+-- Note that -- is a comment to make this valid sql
+\end{minted}
+\end{listing}
+
+And we find that this query ends up returning the user 1! And it is easy to see how this can be extended to get the information of every user by extending the query with an \texttt{or}.
+
+
+What about some more complex queries? For example some databases can load a file with the \texttt{load\_file}. So this would give the \texttt{passwd} file for the database server.
+
+
+\begin{listing}[H]
+\begin{minted}{sql}
+select id, first, last from users where id = '1' union select load_file('/etc/passwd'), 'foo' --'
+-- And whatever we want in foo..
+\end{minted}
+\end{listing}
+
+
+Other ideas include
+
+\begin{listing}[H]
+\begin{minted}{sql}
+-- the schema
+' union select table\_schema, table\_name from information\_schema.tables --' 
+
+-- users and apasswords
+' union select user, password from dvwa.users -- 
+
+\end{minted}
+\end{listing}
+
+
+
+
+Note that this, on any decent web service, will return a bunch of password hashes.
+Fortunately most users suck at picking passwords and so we can use a rainbow table to crack the hashes, i.e. by using hashcat;
+
+\texttt{hashcat <file\_with\_password\_hashes> /var/pentest/wordlists/top\_100\_passwords.txt}
+
+\marginnote{
+    We should consider the implications of this. For example the \texttt{load\_file} attack would not be possible if we ran the sql server as a non-root server or as an user with restricted access.
+}
+
+\subsubsection{Passwords}
+
+Passwords are commonly used for user authentication but have several problems:
+\begin{itemize}
+    \item Users tend to pick easy passwords and share them for many systems
+    \item Authentication is not mutual: when a user enters a password they usually don't know if they are sending the password to the right system
+\end{itemize}
+
+Passwords should not be stored in the clear so that if the attacker somehow got the password file they would know the passwords of all users -- so passwords are hashed with a one-way hash and only the hash is stored.
+However if the attacker reverses one password hash then the attacker will have found the password for all users using the same password (not uncommon!). This problem can be prevented by adding a salt (some random value concatenated with the password) which is stored alongside the password file. This doesn't make it more or less difficult to break a single password because the number of password bits still remain the same (instead of guessing h(<password>) they now guess h(salt + <password>) but salt is known).
+
+
+
+
+\subsubsection{HTTP Response Splitting}
+
+
+HTTP response splitting is a vulnerability that takes advantage of the fact that HTTP naively parses requests to split it into a header and a body just by looking for a carriage return and line feed sequence. 
+If the string \texttt{English} is user input, an attacker can send a request with the language set to \texttt{English\\r\\n  ...} and the server will interpret this as a header and a body. The attacker can then send a response that will be interpreted by the browser as a header and a body. This can be used to inject malicious code into the response.
+
+\begin{blockquote}
+    This is something that has largely been dealt with but sometimes still pops up in legacy or embedded systems.
+\end{blockquote}
+
+
+
+
+
+\subsubsection{Cross-Site Request Forgery (CSRF)}
+
+\begin{blockquote}
+    This one is still relevant and is a common attack vector.
+\end{blockquote}
+
+A vulnerability that allows unauthorized commands to be executed on a web application from an user. Tricks users into visiting a website that contains a link to a site that the user may have visited previously.
+If the user's browser contains a valid authenticated cookie for the site, the attacker can issue authenticated requests to the site.
+
+
+For example, 
+
+\begin{listing}[H]
+\begin{minted}{html}
+<img src="http://bank.com/transfer?amount=1000&to=attacker"
+\end{minted}
+\end{listing}
+
+This would simulate a user visiting the bank's website and transferring money to the attacker via the request. There's technically nothing wrong with it because the request is coming from the user's browser. But the user didn't intend to do this.
+It also doesn't violate the same origin policy because it doesn't involve requesting for cookie contents.
+
+This is very difficult to fix on the client side and largely would have to be kept in mind by the application developer\mn{This is why banks tend to have layers of confirmation screens and short authentication lifetimes.}.
+
+
+Defenses against CSRF:
+
+\begin{itemize}
+    \item Limiting the lifetime of authentication cookies
+    \item Checking HTTP referrer headers (make sure that the referrer is the URL of the previous webpage from which a link was followed) (but this can be possibly forged, depending on the browser)
+    \item Requiring secret token in the GET and POST parameters
+    \item Requiring authentication in GET and POST parameters, not in cookies only
+\end{itemize}
+
+
+
+\subsubsection{Multi-Factor Authentication (MFA)}
+
+\begin{itemize}
+    \item Authentication, in general, uses a piece of information about the user (authentication factor) to verify that the user is who they say they are. This is usually something that they know, they have, they are, or can do.
+    \item Multi-factor authentication is a method of authentication that requires more than one authentication factor to be used to verify the user.
+        \begin{itemize}
+            \item For example: smart credit cards contain a secure chip that can be used to authenticate the user that contains keys and performs cryptographic operations, usually having the card sign a randomly generated string
+            \item As discussed in the labs, the user can also use a one-time password (OTP) that is generated by a hardware token or a mobile app
+            \item Biometric systems:
+                \begin{itemize}
+                    \item Moving from binary to probabilistic security model (false rejection/false acceptance)
+                    \item Layered approaches and good management of biometric templates are necessary
+                \end{itemize}
+        \end{itemize}
+\end{itemize}
+
+
+\subsubsection{Federated Identity}
+
+A single service maintains a user's username and passwords. Handles new registrations, password resets, etc. Multiple services rely on the identity provider to help authenticate users that interact with the services. UTORid is an example.
+
+A case study is the Kerberos system, which is a federated identity system that is used by many organizations to authenticate users via a trusted third party and Needham-Schroeder. The trusted third party uses an authentication server and a ticket-granting server.
+
+
+
+There are three layers to it:
+\begin{enumerate}
+    \item Authentication
+    \item Authorization
+    \item Service
+\end{enumerate}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-13-20-50-25.png}
+\end{figure}
+
+The authentication layer creates a secure token given to the user that the user can then use to prove that they are why they claim they are.
+Next, they go through the authorization server using it's token to get a service token. This authorization service has no idea how to authenticate but it can know if the key is valid. This token is then used to access the service, i.e. printing.
+The service can then use the ticket to grant access to whatever the ticket is for.
+
+
+\begin{blockquote}
+    A nice part of this kind of layered system is that it offers flexibility and agility in design and maintenance. This is especially important for a changing product.
+\end{blockquote}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 \end{document}
