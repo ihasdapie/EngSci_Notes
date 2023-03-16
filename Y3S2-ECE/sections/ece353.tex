@@ -1456,5 +1456,85 @@ See the \texttt{banksim.c} example
 \end{blockquote}
 
 
-\end{document}
 
+
+
+
+
+
+
+\subsection{File Systems}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-15-18-18-36.png}
+    \caption{Common methods for interacting with the filesystem}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-15-18-18-54.png}
+    \caption{Directory methods}
+\end{figure}
+
+File tables are stored in the PCB (process control block) and point to the underlying file in the OS.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-15-18-19-46.png}
+\end{figure}
+
+Each processes has their own file table in its PCB\mn{File descriptors are indexs into that table} and these PCB file table entries then point to a global open file table (GOF) which holds information about the flags and seek position etc. This also houses the vnode\mn{virtual node} which holds information abotu the file (which can be sockets, regular files, mounts, pipes, etc).
+This implies that the current position in file is shared between processes and \texttt{seek} operations in one process leads to \texttt{seek} in the other processes. However, opening the same file in processes after a \texttt{fork} creates multiple GOF entries.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-15-18-30-11.png}
+    \caption{For example, this snippet will produce two LOF (Local Open File table) and three GOF entries}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-15-18-31-01.png}
+\end{figure}
+
+
+How are files stored on disk?
+
+\begin{itemize}
+    \item Contiguous allocation: Space efficient and with fast random access (block = floor(offset/blocksize)). But cannot be resized easily and fragmentation is a problem.
+    \item Linked allocation: Each block has a pointer to the next block. This is more flexible but random access is slower.
+    \item FAT (File Allocation Table): The linked list is no longer on-disk but s instead stored on a separate table. The FAT can be held in memory so random access is sped up.
+    \item Indexed Allocation: Each block has a pointer to a table of pointers to the next block. However file size is limited by the maximum size of the index block.
+\end{itemize}
+
+\begin{example}
+    An index block stores pointers to data blocks only. Disk blocks are 8Kib, pointer to a block is 4 bytes. What is the maximum size of a file managed by this index block?
+
+    There are $ \frac{8Kib}{4b} = 2^{11} $ pointers (and addressable blocks needed) so the total number of bytes is $ 2^{11 } * 2 ^{ 13 } = 2^{24} $ = 16Mib
+
+
+
+\end{example}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
