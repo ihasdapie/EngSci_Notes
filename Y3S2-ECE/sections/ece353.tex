@@ -1523,7 +1523,45 @@ How are files stored on disk?
 
 
 
+\subsection{inodes}
 
+\texttt{inodes} describe a file system object. They contain metadata and pointers to block(s)\mn{Small files can just use direct pointers, whereas larger files have additional nodes with pointers to more blocks. Very very small files may live entirely in the inode}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-16-17-48-45.png}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-16-17-49-55.png}
+    \caption{# pointers per indirect table: $2^{13}/2^2 = 2^{11}$. Num of addressable blocks = $ 12 + 2^{11} + 2^{11}^2 + 2^{11}^3 \approx 2^{33} $}. Total bytes is $ 2^{33} \cdot  2^{13} = 64 TiB $
+\end{figure}
+
+
+Hard links\mn{Directory entry} are pointers to one inode. Multiple hard links can point to the same inode, deleting a file only removes a hard link.
+Soft links are paths to another file, and are stored as a file. They are not pointers to an inode, but rather a path to another file. Accessing a soft link resolves these links until we reach an inode, an unresolvable soft link leads to an exception.
+
+
+\subsubsection{Everything is a file}
+
+In UNIX everything is a file\mn{Or some type thereof}. Block devices are files, sockets are files, pipes are files, etc. Directories are files that store filenames and pointers to inodes. 
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-16-17-59-51.png}
+    \caption{Some things that are/are not stored in an inode}
+\end{figure}
+
+Note that the inode does not know about the softlinks to it, nor the location of its hard links. However it does store the number of hard links to it so that the kernel can erase the file\mn{use \texttt{stat} to explore this}.
+
+\subsubsection{Caches}
+
+Writing to the disk is slow so file blocks are cached in memory in the filesystem cache\mn{Explore temporal and spatial locality}. A daemon periodically writes changes to the disk\mn{Can manually trigger via \texttt{flush} or \texttt{sync}}.
+Deleting a file then involves three steps: 1. removing it's directory entry, releasing the inode to the pool of free inodes, and 3. returning blocks to the pool of free blocks.
+Since crashes can happen at any time, UNIX systems are generally built on journaling filesystems, which are filesystems that keep a circular buffer of changes made. This allows for recovery from crashes as well as improving performance by reducing the number of writes to the disk. 
 
 
 
