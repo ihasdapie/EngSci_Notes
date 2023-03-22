@@ -1536,7 +1536,7 @@ How are files stored on disk?
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\linewidth]{img/image_2023-03-16-17-49-55.png}
-    \caption{# pointers per indirect table: $2^{13}/2^2 = 2^{11}$. Num of addressable blocks = $ 12 + 2^{11} + 2^{11}^2 + 2^{11}^3 \approx 2^{33} $}. Total bytes is $ 2^{33} \cdot  2^{13} = 64 TiB $
+    \caption{\# pointers per indirect table: $2^{13}/2^2 = 2^{11}$. Num of addressable blocks = $ 12 + 2^{11} + (2^{11})^2 + (2^{11})^3 \approx 2^{33} $. Total bytes is $ 2^{33} \cdot  2^{13} = 64 TiB $}
 \end{figure}
 
 
