@@ -1,0 +1,11 @@
+char* processNext(char* strm){
+    char buf[512];
+    short len = *(short*)strm; // note that by default these are signed
+    if (len <= 512) {
+        memcpy(buf, strm, len); // note that the 3rd arg of memcpy is an unsigned int
+        process(buf);
+        return strm + len;
+    } else {
+        return -1
+    }
+}
