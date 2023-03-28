@@ -1571,7 +1571,7 @@ How can I convince you that the solution to a linear program is optimal?
 
 \begin{equation}
     \begin{split}
-        max &=  x_1 \\
+        \max &  x_1 \\
         \text{given} &\\
         x_1 + x_2 + x_3 &\le  1 \\
         x_1 \cdot  x_2 \cdot  x_3 \ge  0 \\
@@ -1594,7 +1594,7 @@ Before we do that, here's the above logic formalized:
 Given the $ LP $ in general form
 
 \begin{equation}
-    max c^T x \text{ s.t. } Ax \le  b \qquad x \ge 0
+    \max c^T x \text{ s.t. } Ax \le  b \qquad x \ge 0
 \end{equation}
 
 We may apply the technique of dropping values and multiplying the inequalities used above.
@@ -1619,7 +1619,7 @@ If every row of $ yA $ is greater than equal to $ c_i $, then the objective valu
 
 And as it turns out this is just yet another linear program for minimization over choices of $ y $ that we can solve with our existing LP techniques.
 \marginnote{
-    if $ max c^Tx \text{ where }Ax \le  b, x\ge 0$ is the original LP, we call it the \textbf{primal} LP, and $ min b^Ty \text{ where } A^Ty\ge c, y \ge 0   $ is the \textbf{dual} LP. Refer to handout for more primal-dual pairs.}
+    if $ \max c^Tx \text{ where }Ax \le  b, x\ge 0$ is the original LP, we call it the \textbf{primal} LP, and $ min b^Ty \text{ where } A^Ty\ge c, y \ge 0   $ is the \textbf{dual} LP. Refer to handout for more primal-dual pairs.}
 
 
 \begin{theorem}
