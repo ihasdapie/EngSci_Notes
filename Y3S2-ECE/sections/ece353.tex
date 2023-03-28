@@ -1579,6 +1579,28 @@ Since crashes can happen at any time, UNIX systems are generally built on journa
 Sockets are another way to enable IPC, but over the network (i.e. possibly between different machines).
 Use follows a server-client model, where the server sets up sockets via the \texttt{socket, bind, listen,} and \texttt{accept} system calls. The client has \texttt{socket} and \texttt{connect}.
 \texttt{socket} creates a socket, \texttt{bind} attaches the socket to some location (file, port, etc), \texttt{listen} to indicate that connections are to be accepted, and \texttt{accept} to accept them. \texttt{connect} connects to an existing socket and enables the socket to send/receive data.
+\texttt{UNIX} sockets are for IPC between processes on the same machine, whereas \texttt{AF\_INET} or \texttt{AF\_INET6} is for IPv4 and IPv6 between machines over the network respectively.
+Sockets can usually be of two \texttt{type}-s: stream (TCP) and datagram (UDP). TCP is reliable and handshakes and ordered, while UDP is unreliable and unordered.
+
+\begin{itemize}
+    \item \texttt{bind} sets socket to an address. Different \texttt{sockaddr} structures are available for different protocols
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.8\linewidth]{img/image_2023-03-22-01-01-37.png}
+            \label{fig:}
+        \end{figure}
+    \item \texttt{int listen (int socket, int backlog)} system call sets queue limits for incoming connections
+
+    \item \texttt{int accept(int socket, struct sockaddr* address, socklen\_t* address\_len)} system call accepts a connection on a socket and may block until a connection is made. Returns a new FD that we can write to.
+    \item \texttt{int connect(int sockfd, const struct sockaddr* addr, socklen\_t addrlen)} system call connects to a socket. If it succeeds sockfd can be used as a fd.
+    \item Instead of \texttt{read} or \texttt{write} there is also \texttt{send} and \texttt{recv} system calls which also have flags as well as \texttt{sendto}/\texttt{recvfrom} which takes an address.
+\end{itemize}
+
+
+\begin{blockquote}
+    TODO: sockets example
+\end{blockquote}
+
 
 
 
