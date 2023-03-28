@@ -1622,12 +1622,46 @@ And as it turns out this is just yet another linear program for minimization ove
     if $ max c^Tx \text{ where }Ax \le  b, x\ge 0$ is the original LP, we call it the \textbf{primal} LP, and $ min b^Ty \text{ where } A^Ty\ge c, y \ge 0   $ is the \textbf{dual} LP. Refer to handout for more primal-dual pairs.}
 
 
+\begin{theorem}
+    Weak duality: Let $ x $ satisfy the primal LP, and let $ y $ satisfy the dual constraints. Then, $ c^Tx \le  b^Ty $.
+\end{theorem}
+
+The proof follows from observing that the primal LP is a maximization problem and the dual is a minimization problem. Then a solution to the maximization problem is lesser than it's dual minimization problem. More formally,
+
+\begin{proof}
+    Observe that
+\begin{equation}
+    u, w, v \in \mathbb{R}^n, u \ge  v, w \ge 0 \text{ then  } u^Tw \ge v^Tw
+\end{equation}
+
+Then, since we have $ c \le  A^T y $ and $ x \ge 0 $, we have $ c^Tx \le  y^T Ax $\marginnote{Think of the connection between the dual linear programs; $ b $ and $ c $ appear in both the primal and dual problems}. Likewise, we have $ y^TAx \le  y^T b $. So,
+
+\begin{equation}
+    c^Tx \le  y^T Ax \le  y^T b \implies c^Tx \le  b^Ty
+\end{equation}
+    
+\end{proof}
+
+
 
 \begin{theorem}
-
-    If both primal and dual LPs are feasible, then their values are equal and the optimal value is the solution to either LP.
-    
+    If both primal and dual LPs are feasible, then their optimal values are equal.
 \end{theorem}
+
+The proof of this theorem lies on Farkas' Lemma.
+
+\begin{lemma}
+    \textbf{Farkas's Lemma}: For any $ m \times  n $ matrix $ A $ and any $ m \times 1 $ vector $ b $, exactly one of the following two statements is true
+
+    \begin{enumerate}
+        \item There exists a $ x \in \mathbb{R}^n, x \ge  0  $ such that $ Ax = b $
+        \item There exists a $ y \in R^m $ such that $ A^Ty \le  0 $ and $ b^Ty > 0 $ 
+    \end{enumerate}
+
+\end{lemma}
+
+
+This can be 
 
 
 

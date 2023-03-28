@@ -1805,6 +1805,113 @@ The service can then use the ticket to grant access to whatever the ticket is fo
 
 
 
+\begin{definition}
+    Single-sign-on (SSO): enables a user to log in once and access multiple services without having to log in again. Generally implemented through some sort of federated identity protocol.
+\end{definition}
+
+
+Typical web authentication flow:
+
+\begin{enumerate}
+    \item User authenticates to the identity service provider
+    \item Service provider sends the user an \textbf{unforgeable}  token
+    \item User presents token to service they want to access which it accepts n lieu of authenticating the user
+    \item The service now has a certified identity for the user
+\end{enumerate}
+
+
+\begin{example}
+    \textbf{OAuth}:  An open specification developed by google and facebook for an authorization protocol that is often used as an authentication protocol.
+
+    There are three parties involved:
+    \begin{itemize}
+        \item \textbf{Resource Owner}: the user. A way to think of this is that you are the profile owner.
+        \item \textbf{Authorization Server}: the service that the user wants to access
+        \item \textbf{Client}: the service that the user wants to access
+    \end{itemize}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-03-27-20-56-02.png}
+    \end{figure}
+
+    The service that we want to access (client) will send a request to us (resource owner) when we want to log in. The user will then use our information and that client request against the authorization server in order to obtain an auth code. The same person who logged in also is the one who hands it back to the client, who uses the authorization server in order to validate things and access the requested information.
+\end{example}
+
+Federated identity takes a lot of the security burden off the developer which has significant productivity benefits.
+\marginnote{Note: understand difference and relationship between authorization and authentication. Revocation is ok for authorization but is tricky for authentication}
+
+
+
+
+
+\subsection{Security Modes and Covert Channels}
+
+
+
+\subsubsection{Security Policies}
+Security policies govern how a system handles information. They are generally used by the military/government/etc. and are based on security models that are usually fairly intuitive but can also stand up to proofs for security. They are generally implemented as MAC\mn{Mandatory Access Control} policies.
+
+
+\begin{itemize}
+    \item Confidentiality Policies: defines who is allowed access information or resources (protect information from leaking)
+    \item Integrity Policies: prevents corruption of information
+\end{itemize}
+
+
+\begin{definition}
+    Bell-La Padula (BLP) Model: a model designed to build confidentiality policies.
+    The idea behind BLP models is that it defines certain levels of data, i.e. unclassified, classified, secret, top-secret, and so forth.
+    And each level will be able a file up to a certain level but cannot write \textit{down} to another level.
+
+\end{definition}
+
+BLP does not preserve any integrity, however.
+
+\begin{definition}
+    Biba Integrity Model: the mathematical dual of the BLP model, designed to build integrity policies.
+    Consider a research experiment that flows from lab measurements -> report -> peer review -> media -> twitter. Then we allow an \textit{write-down} policy to be implemented; there's no danger to the data if we write a twitter post using the media, but there is definitely danger to the data's integrity if we use a twitter post to generate lab measurement data.
+\end{definition}
+
+
+
+
+
+\subsubsection{Side channels and Covert Channels}
+
+\begin{definition}
+    A side-channel allows for unintentional information flow in or out of the system, e.g. user data or cryptographic keys.
+    Channels can come in many unexpected forms, i.e. R/F leakage, event timing, etc.
+    While some side channels can be remotely exploited, many more can be exploited locally.
+\end{definition}
+
+Timing analysis is one side channel that relies on the fact that algorithms can somethings leak important security information.
+For example, standard \texttt{strcmp} implementations will short circuit at the first character that is not equal -- so the runtime of the method is proportionate to the number of \textit{matching} characters.
+So by feeding in a ton of test strings and carefully inspecting the timing we may be able to discover how close we are to the correct string.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-28-15-37-17.png}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
