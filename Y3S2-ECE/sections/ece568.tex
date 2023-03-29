@@ -2022,7 +2022,7 @@ Defenses include rate limiting, or using a SYN cookie\mn{This breaks the TCP han
 \end{figure}
 
 
-\marginnote{Note that low-powered firewalls may only filter the first syn packets. Syn-ack cookies can pose a problem for them since our network flow may establish a connection much further down from the initial syn packet}
+Low-powered firewalls i.e. in embedded systems may only filter the first syn packets. Syn-ack cookies can pose a problem for them since our network flow may establish a connection much further down from the initial syn packet. Many modern communication protocols do take advantage of syn-ack cookies and break the TCP/IP standard in doing so, so this is something to watch out for.
 
 
 
