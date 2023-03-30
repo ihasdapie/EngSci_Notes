@@ -2053,837 +2053,114 @@ Therefore BGP can be compromised in a manner similar to ARP attacks, i.e.if a ma
 \end{definition}
 
 In order to avoid making excessive repeated queries DNS responses are cached at name name servers for some \texttt{TTL} lifetime\mn{There is a trade-off between efficiency (high TTL) and shorter TTL (better load balancing)}
-One way to exploit DNS servers is to \textit{poison} their cache:
+One way to exploit DNS servers is to \textit{poison} their cache: updating a DNS server's cache with bogus mappings
 
 
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-30-03-15-39.png}
+    \caption{DNS Cache poisoning}
+\end{figure}
 
+DNS cache must be inside the network and must also be able to make requests from outside the network as well.
 
+\begin{itemize}
+    \item The attacker fires off a number of requests to the victim nameserver, i.e. where is bank of steve?
+    \item The attacker then floods a number of forged answers to the victim nameserver (trying out a bunch of query ids (QIDs)) with the forged answer that the bank of steve is at their ip address. Since the attacker knows the request timing it can usually win the race condition
+    \item The victim nameserver cache is now poisoned!
+\end{itemize}
 
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-30-03-18-23.png}
+    \caption{A more robust attack to poison an entire domain}
+\end{figure}
 
+The way that this works is that we target one message earlier in the DNS protocol.
+A new random name is generated and then a forged request is sent to the victim nameserver to that random name.
+This forces the victim nameserver to make a request to resolve it (the victim needs to know what nameserver to query in order to resolve these forged requests) since it has never seen it before.
+So now now the attacker may likewise forge a response to the victim nameserver and poison the cache by telling the victim nameserver the address for their fake nameserver.
+Once this happens then the victim nameserver will always send requests to the attacker's nameserver, which can then forge responses to the victim nameserver, steal data, etc.
 
 
+Another DNS attack is the DNS Rebinding Attack.
+Whereas the previous attacks replace the mapping for the victim's domain with the attacker's IP, this attack replaces the mapping for the victim's domain with the attacker's IP.
 
 
+\begin{blockquote}
+    I took these notes at 2023-03-30 03:34AM, so they are especially incoherent
+\end{blockquote}
 
 
 
+Attacker gets you to visit a webpage
+Click on the link
+Computer wants to connect to attacker.com, and runs a DNS query to see where it is
+This will give the legitimate attack of attacker.com and then retrieves the webpage. However the provided TTL from the name server is set to a really low value.
+A script in the webpage first pauses for a moment and then retrieves some more stuff from attacker.com. Since the TTL was so short, the victim will now make another DNS query. 
+The second time it gives an IP address that corresponds to a machine on the local network, thereby rebinding attacker.com to a machine in the internal network.
+After another small timeout the script will now make a third request to attacker.com, which will go to the original address.
+From the standpoint of the victim it will look as if there are no problems: attacker.com is valid and the script is working as intended: the same origin policy is not being violated.
+So the attacker can pull information from outside, push information out, pull information from inside, and so forth -- all without violating the same origin policy.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-30-03-33-43.png}
+    \caption{Summary of steps}
+\end{figure}
 
+\marginnote{The reason why the same origin policy operates on the domain name and not the IP address is due to load balancing or other reasons}
 
+Defenses to this attack include
+\begin{itemize}
+    \item Pinning DNS/IP mappings to the value in the first DNS response. Many modern browsers do this, despite breaking DNS protocol.
+    \item Block resolution of external names into local IP addresses at a local DNS server (this would make sense, anyways)
+\end{itemize}
 
 
 
+\subsubsection{DDoS}
 
 
+\begin{definition}
+    Denial of Service (DoS) is an attack that prevents a service from being used by legitimate users.
+    Usually the attacker aims to consume as many resources as possible, targeting either bandwidth, memory, number of connections, etc.
+    Since attacks like this generally require flooding the server with requests of some forth, the attacker needs a lot more bandwidth than the victim.
 
+    \textbf{Distributed} Denial of Service (DDoS) is a DoS attack that is carried out by multiple attackers, usually by an attacker with a large number of compromised machines that they use to simultaneously attack a single target
+\end{definition}
 
 
 
 
 
+\subsubsection{Common Defenses}
 
+\begin{itemize}
+    \item Cryptographic protocols can be used to defend against a lot of the attacks by dealing with spoofing and injected data (but not DoS)
+        \begin{itemize}
+            \item ssl, ssh, etc.
+            \item These generally work at the application layer, but what about the network layer?
+        \end{itemize}
+\end{itemize}
 
+\begin{definition}
+    \textbf{IPSec}: An example of a cryptographic protocol that works at the network layer.
 
+    Provides confidentiality, integrity, replay protection, and authentication for IP packets via Authenticated Headers (AH) and Encapsulating Security Payload (ESP)\mn{AH and ESP can be turned on/off depending on what you need}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-03-30-03-42-19.png}
+    \end{figure}
 
+    It also supports a number of modes such that it can be used even when all routers aren't IPSec capable.
+    Transport mode is used when endpoint routers support IPSec (encrypts/authenticates the packet payload), and Tunnel mode is used when endpoint routers don't support IPSec but the endpoint gateways do. This encrypts/authenticates the header and payload and then encapsulated it in another packet
+\end{definition}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+As a developer we can choose between IPSec and SSL dependong on our needs. SSL offers better access control and can be used for a wider variety of applications\mn{And more security since security keys etc negotiated per-connection}, but IPSec is more efficient and has lower overhead (doesn't need to do SSL handshakes, etc).
 
 
 
