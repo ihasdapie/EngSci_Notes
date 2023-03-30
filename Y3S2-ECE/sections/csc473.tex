@@ -1661,7 +1661,20 @@ The proof of this theorem lies on Farkas' Lemma.
 \end{lemma}
 
 
-This can be 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-29-12-40-27.png}
+\end{figure}
+
+\begin{blockquote}
+We can think of Farkas's Lemma as a conclusion made about the geometry of the problem.
+We define a hypercone $ C$ with the first constraint, $C = \left\{ Ax: x \ge 0 \right\} $.
+If the first statement does not hold, then we have $ b \notin C $.
+Now what we aim to show is that, if $ b \notin C $, then there exists a hyperplane $ H $ such that
+
+    
+\end{blockquote}
 
 
 
@@ -1669,7 +1682,15 @@ This can be
 
 
 
+\subsection{Rounding \& Approximation Algorithms}
 
+Many natural and important optimization problems are NP-hard. So what do we do? 
+
+\begin{enumerate}
+    \item Approximation: output an approximately optimal solution in worst-case polynomial time
+    \item Algorithms that are efficient on special classes of the problem, i.e. Max Cut problem in planar graphs.
+    \item Algorithms that are exponential in some parameter, i.e. $ 2^{O(k)} poly(n) $ and then hope that the parameter is small.
+\end{enumerate}
 
 
 

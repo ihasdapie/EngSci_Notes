@@ -2026,12 +2026,34 @@ Defenses include rate limiting, or using a SYN cookie\mn{This breaks the TCP han
 
 
 
+\subsubsection{BGP: Border-Gateway Protocol}
+
+The internet is broken up into autonomous systems (AS) that are independently managed and connect to each other via gateways\mn{I.e. an ISP}. 
+Gateways communicate via BGP to update routing information to handle scenarios such as a router going down. This is performed in a peer-to-peer manner.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-29-14-57-31.png}
+\end{figure}
+
+Routers trust each other and don't authenticate advertised routes or BGP packets.
+Therefore BGP can be compromised in a manner similar to ARP attacks, i.e.if a malicious actor gains access to a network it can advertise "good" routes that actually route to the attacker's gateway instead of the intended ones.
 
 
+\subsubsection{DNS}
 
 
+\begin{definition}
+    DNS (Domain Name System) is a hierarchical system for resolving symbolic names to IP addresses.
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-03-29-15-00-01.png}
+    \end{figure}
+\end{definition}
 
+In order to avoid making excessive repeated queries DNS responses are cached at name name servers for some \texttt{TTL} lifetime\mn{There is a trade-off between efficiency (high TTL) and shorter TTL (better load balancing)}
+One way to exploit DNS servers is to \textit{poison} their cache:
 
 
 

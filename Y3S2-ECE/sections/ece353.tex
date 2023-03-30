@@ -1602,9 +1602,79 @@ Sockets can usually be of two \texttt{type}-s: stream (TCP) and datagram (UDP). 
 \end{blockquote}
 
 
+\subsection{Memory Hierarchy}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-29-13-48-02.png}
+\end{figure}
+There is an inversely proportional relationship between computer memory capacity and speed/price, so modern computers use a combination of different memory devices i.e. CPU Cache -> RAM -> SSD -> HDD to store and manage data.
+However, we want to abstract this away for the user; each level wants to pretend it has the speed of the level about it and the capacity of the layer below. 
+This is done through \textit{paging}: something we've talked about before but will go into further detail now.
+
+Here are some common page replacement policies, or what to do when there is a \textit{page fault}\mn{When a request to the page table is made but the requested page isn't currently in memory}
+\begin{enumerate}
+    \item Optimal: replace page that won't be used the longest
+    \item Random: Replace a random page
+    \item FIFO: replace oldest page first
+    \item LRU: replace page that hasn't been used for the longest time
+\end{enumerate}
 
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-29-13-49-43.png}
+    \caption{Example of using the optimal page replacement policy. Note that 4 gets replaced by 5 since it will get used after 1, 2, 3. Though in this contrived example we know what pages our program will access ahead of time, in practice this is not the case.}
+\end{figure}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-29-13-53-24.png}
+    \caption{A LRU example with FIFO to break ties}
+\end{figure}
+
+A downside of using LRU is that it has to search all pages. This can be implemented via a counter or a clock. In software it's also too expensive: you need a doubly linked list of pages and a ton of traversal/manipulation time.
+In practice we just use approximate LRU\mn{LRU is just an approximation of optimal anyways}
+
+TLDR:
+
+\begin{itemize}
+    \item Optimal isn't realistic
+    \item Random works surprisingly well and avoids worst case
+    \item FIFO: easy to implement but suffers for Beladay's anomaly\mn{Increasing the number of page frames results in an increase in the number of page faults for certain memory access patterns. FIFO suffers from this but stack-based (LRU) doesn't}
+    \item LRU: expensive to implement
+\end{itemize}
+
+
+A more sophisticated page replacement algorithm is the \textit{clock replacement} algorithm
+
+\begin{definition}
+    Clock Page Replacement Algorithm:
+
+    \begin{itemize}
+        \item Keep a circular list of pages in memory
+        \item Use a reference bit for each page in memory
+        \item Has a hand pointing to the last element examined
+    \end{itemize}
+
+    To insert a new page:
+        \begin{itemize}
+            \item Check the hand's reference bit: if 0 place page + advance
+            \item If 1: set to 0, advance hand, repeat
+        \end{itemize}
+        Page accesses set the reference bit to 1\mn{And I believe set the hand to the read bit}
+\end{definition}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-29-14-00-13.png}
+\end{figure}
+\marginnote{This is kind of just like using a circular buffer to maintain our page table, but with a pseudo-LRU policy maintained via setting reference bit to 1 on accesses}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-03-29-14-00-22.png}
+\end{figure}
 
 
 
