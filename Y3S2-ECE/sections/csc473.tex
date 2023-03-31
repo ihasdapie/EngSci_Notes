@@ -1692,6 +1692,184 @@ Many natural and important optimization problems are NP-hard. So what do we do?
     \item Algorithms that are exponential in some parameter, i.e. $ 2^{O(k)} poly(n) $ and then hope that the parameter is small.
 \end{enumerate}
 
+\subsubsection{Deterministic Rounding}
+Our goal is to show that 
+
+\begin{equation} 
+    LP(G, w) \le OPT(G, w) \le 2 \cdot  LP(G, w)
+\end{equation}
+
+Let $ y $ be an optimal solution and define
+
+\begin{equation}
+    C = \left\{  u \in V : y_u \ge  \frac{1}{2} \right\} 
+\end{equation}
+
+Note:
+
+\begin{equation}
+    \begin{split}
+        x_u = 1 &\Leftrightarrow u \in C \Leftrightarrow y_u \ge  \frac{1}{2} \\
+        x_u = 0 \le  y_u < \frac{1}{2}\\
+    \end{split}
+    \label{eq:}
+\end{equation}
+
+\begin{enumerate}
+    \item C is a vertex cover
+\mn{consider some edge in the graph with endpoints $ y_u, y_v $.
+    If $ (u, v) $ is an edge ($ (u,v) \in E $), then $ y_u + y_v \ge  1 $.
+    Then, $ \max \left\{  y_u, y_v \right\}  \ge  \frac{1}{2} \Rightarrow \left\{ u, v \right\}  \cap C \neq \emptyset$
+}
+    \item $ w(C) \le  2 \cdot  LP$, since $ w(C) = \sum w_u x_u \le \sum w_n y_n \text{ = LP } $
+\end{enumerate}
+
+\marginote{
+Note that although the LP does not always have an integral optimal solution, it will always have a solution that uses 0, 1, or half.}
+
+
+\subsubsection{Set Cover}
+
+Given an input of sets $ S_1 \ldots,  S_m \subseteq [n] $ where $ \bigcup^m_{i=1} S_i = [n]  $ and weights $ w \in \mathbb{R}^m $, find $ C \subseteq [m] $ such that
+
+\begin{itemize}
+    \item $ \bigcup_{i \in C} S_i = [n] $
+    \item $ w(C) = \sum_{i \in C} w_i $ is minimized
+\end{itemize}
+
+\marginnote{Note that vertex cover is a special case, since no element appears in a set more than once. We're looking here for a factor $ O(log(n)) $ approximation, which is the best possible assuming $P != NP$}
+
+Our approach to relaxing and rounding the problem is to use the same approach as before.
+
+Integer program:
+
+\begin{equation}
+    \begin{split}
+        \min \sum_{i=1}^m w_i x_i \\
+        \text{subject to} \\
+        \sum_{i, j \in S_}^m x_i S_i \ge 1 \text{ for all } j \in [n] \\
+        x_i \in \{0, 1\} \text{ for all } i \in [m]
+    \end{split}
+\end{equation}
+
+TODO: make sure that the above is correct.
+
+Summing over all the sets that contain $ j $ and adding up all of the indicator variables\sn{indicator variable $ x_i = 1 \Leftrightarrow i \in C $}
+So for every $ j $ at least one of the $ x_i $ is 1, i.e. it should be in the cover.
+
+
+Randomized Rounding:
+
+\begin{codebox}
+\li$ y $ = optimal LP solution
+\li\For $  t \gets 1 \ldots, l = ln(2n) $ \Do 
+\li    $ C_t = \emptyset $
+\li    For $ i \ldots,  m $ add $ i $ to $ C_t $ with probability $ y_i $ \End
+\li$ C = C_1 \cup \ldots, C_l $
+\end{codebox}
+
+
+The idea behind this is to create a bunch of mini set set covers, and then 
+
+
+We make a number of claims about the above algorithm
+
+\begin{lemma}
+$ E[w(C)] \le  l \cdot  LP $
+
+\begin{proof}
+Define an indicator random variable
+
+\begin{equation}
+    z_{t, i} = \begin{cases}
+        1 & \text{ if } i \in C_t \\
+        0 & \text{ otherwise }
+\end{equation}
+
+Since $ C $ is the union of all $ C_i $, the weight of $ C $ is at most the sum of weights of all $ C_i $
+
+\begin{equation}
+    \sum^l_{t=1} E[w(C_t)] = \sum^l_{t=1} E[\sum_{i = 1}^m w_i z_{t,i}] = \sum^l_{t=1} \sum_{i = 1}^m w_i E[z_{t,i}] = \sum^l_{t=1} \sum_{i=1}^m w_i y_i = L = l \cdot  LP
+\end{equation}
+
+The intuition follows from realizing that the probability of an element being in the cover is $ y_i $, so the expectation of $ z_{t,i} $ is given by $ y_i $
+
+
+The second claim we make is that
+\begin{equation}
+    P(C \text{ $ C $ is a vertex cover }) \ge  1/2
+\end{equation}
+
+
+
+
+
+\end{proof}
+
+
+
+\end{lemma}
+
+
+
+
+
+
+
+
+
+
+
+
+
+\subsection{Minimum Weight Perfect Matching}
+
+\subsection{Integer Programming}
+
+\begin{definition}
+    An \textit{integer program} is a linear program where all variables are restricted to be integers.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-03-31-12-33-41.png}
+        \caption{Feasible region are points in the polytope}
+    \end{figure}
+
+\end{definition}
+
+
+
+
+A minimum weight perfect matching problem can be formulated as an integer program
+
+
+
+
+The minimum weight perfect matching problem can be formulated as follows:
+
+
+Let $ OPT(G, w) = \min \left\{  w(C): C \text{ is a vertex cover } \right\}  $
+
+
+
+\begin{itemize}
+    \item $ LP(G, w) $ is the value of the LP
+    \item $ OPT(G, w) $ is the value of the integer problem (min. weight of a vertex cover) and is $ \ge  $ the LP value
+\end{itemize}
+
+
+\marginnote{Since the solution of the integer problem }
+
+
+Consider an integer program as follows:
+
+
+
+\begin{equation}
+    
+\end{equation}
+
+
 
 
 

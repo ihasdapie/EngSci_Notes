@@ -1676,6 +1676,40 @@ A more sophisticated page replacement algorithm is the \textit{clock replacement
     \includegraphics[width=0.8\linewidth]{img/image_2023-03-29-14-00-22.png}
 \end{figure}
 
+\subsection{Memory Allocation}
+
+There are two main ways to allocate memory: \textit{static} and \textit{dynamic} allocation. Static allocation is done at compile time, and dynamic allocation is done at runtime.
+Static allocation is pretty easy to implement and understand: just give it a fixed size and you're done. However, it can be wasteful or limiting since we don't always know how much memory we'll need at compile time.
+We can allocate dynamic memory on the stack or the heap. \texttt{c} largely does stack allocation for you, but the problem is that the scope of stack allocated memory is limited to the scope in which it was allocated.
+However, dynamic allocation can pose a problem: since we allocate memory in different sized contiguous blocks, compaction is not possible and every allocation decision is permanent. 
+This can leave holes in memory that need to be managed and taken into consideration when allocating memory\marginnote{Note that in $ c $ previous allocations cannot be relocated by the runtime (like Java does, since Java can move the memory around for you)}
+Generally speaking there are three cases that lead to fragmentation:
+
+\begin{enumerate}
+    \item Different allocation lifetimes
+    \item  Different allocation sizes
+    \item Inability to relocate previous allocations
+\end{enumerate}
+
+
+Also, there exists two different types of fragmentation: \textit{external} and \textit{internal}. External fragmentation is when different sized blocks are allocated and there isn't enough space between the blocks to allocate. Internal fragmentation occurs when we allocate fixed sized blocks and there is excess space within the blocks.
+
+In our \texttt{malloc} implementations we want to minimize fragmentation\mn{Large applications i.e. chrome will actually ship their own allocators to minimize fragmentation}.
+As a guiding heuristic we want to reduce the number of holes between blocks of memory, and if there are holes, we want them to be as large as possible.
+
+Most implementations use a free list: free blocks are chained together with a doubly linked list. Allocation is done by finding a suitable block and removing it from the free list, and deallocation is done by moving the block back to the free list.
+
+There are three general heap allocation strategies best(find smallest block that can satisfy the request), worst (choose largest block), and first fit (choose first fit that can satisfy the request).
+From simulations best fit tends to leave very large holes and very small holes, worst it tends to be the worst in terms of storage utilization, and first-fit tends to be the best for leaving behind average-sized holes.
+
+
+
+
+
+
+
+
+
 
 
 \end{document}
