@@ -1705,10 +1705,55 @@ From simulations best fit tends to leave very large holes and very small holes, 
 
 
 
+\subsubsection{Buddy Allocation}
+
+Typically allocation requests are of size $ 2^n $, so if we restrict allocations to powers of $ 2 $ we may enable a more efficient allocator.
+We restrict requests to be of size $ 2^k$, $ 0 \le  k \le  N $, where $ N $ is the maximum size of the heap. We then maintain a free list for each size class.
+When we want to allocate a block of size $ 2^k $, we first check the free list for that size class.
+Our implementation uses $ N+1 $ free lists of each size.
+To meet a request of size $ 2^k $, we search the free list until we find a big enough block. If needed we recursively divide the block until it's the correct size, inserting buddy blokcs into free lists. 
+Deallocations involve coalescing the buddy blocks together (recursively if needed)
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-03-15-25-49.png}
+    \caption{In this example we see the 256 byte block being split into two 128 byte blocks (buddy pair) and so forth. A request of size 28 or 32 may be fulfilled by any of the blocks of size 32}
+\end{figure}
+
+And what happens when we free the 64 byte block?
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-03-15-27-12.png}
+    \caption{Before freeing size 64}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-03-15-27-20.png}
+    \caption{After freeing the size 64 block}
+\end{figure}
+
+Buddy allocators are extremely common and are used in the Linux kernel as well.
+They are fast and simple compared to generally dynamic allocation, and avoids external fragmentation by keeping free physical pages contiguous. However it can suffer from internal fragmentation due to the rounding up of allocation size.
 
 
 
+\subsubsection{Slab Allocators}
 
+Slab allocators take advantage of fixed size allocations by allocating objects of the same size from a dedicated pool.
+Every object type has its own pool with blocks of the correct size, preventing internal fragmentation.
+It can be though of as a cache of slots\mn{Think of the ext2 filesystem we implemented in lab 6 where we have memory (blocks) and bitmaps to track which ones are free or not}
+
+
+A hybrid scheme may be made by combining buddy allocation with slab allocation. This is done by allocating a slab of objects from the buddy allocator, and then allocating objects from the slab via the slab allocator.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-03-15-32-17.png}
+    \caption{The buddy allocator allocates a slab of objects for the slab allocator to use. Here we have allocated two blocks each for objects of size A and B. Then the slab allocator manages the slabs, minimizing internal fragmentation}
+\end{figure}
 
 
 

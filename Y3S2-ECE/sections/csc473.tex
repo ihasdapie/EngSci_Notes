@@ -1671,14 +1671,29 @@ The proof of this theorem lies on Farkas' Lemma.
 We can think of Farkas's Lemma as a conclusion made about the geometry of the problem.
 We define a hypercone $ C$ with the first constraint, $C = \left\{ Ax: x \ge 0 \right\} $.
 If the first statement does not hold, then we have $ b \notin C $.
-Now what we aim to show is that, if $ b \notin C $, then there exists a hyperplane $ H $ such that
+Now what we aim to show is that, if $ b \notin C $, then there exists a hyperplane $ H $ through the origin that splits the space such that the hypercone lies entirely on one side of $ H $ and $ b $ is on the other side.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-03-15-54-43.png}
+\end{figure}
     
 \end{blockquote}
 
+Using Farkas's Lemma, we can prove the theorem.
+Since we assume that the primal and dual are feasible, then their values $ v_p, v_d $ are finite and achieved. 
+Since the optimal value of the dual LP is $ v_d $, there does not exist any $ y \in \mathbb{R}^m$ such that $ y \ge 0  $, $ A^ty \ge c $, and $ y^tb < v_d$. This implies that 
+
+\begin{equation}
+    
+\end{equation}
 
 
 
+
+
+
+\marginnote{Also, if we take the dual of a LP twice we get the original LP back}
 
 
 
@@ -1724,7 +1739,7 @@ Note:
     \item $ w(C) \le  2 \cdot  LP$, since $ w(C) = \sum w_u x_u \le \sum w_n y_n \text{ = LP } $
 \end{enumerate}
 
-\marginote{
+\marginnote{
 Note that although the LP does not always have an integral optimal solution, it will always have a solution that uses 0, 1, or half.}
 
 
@@ -1747,8 +1762,8 @@ Integer program:
     \begin{split}
         \min \sum_{i=1}^m w_i x_i \\
         \text{subject to} \\
-        \sum_{i, j \in S_}^m x_i S_i \ge 1 \text{ for all } j \in [n] \\
-        x_i \in \{0, 1\} \text{ for all } i \in [m]
+        \sum_{i, j \in S}^m x_i S_i \ge 1 \text{ for all } j \in [n] \\
+        x_i \in \left\{ 0, 1 \right\} \text{ for all } i \in [m]
     \end{split}
 \end{equation}
 
@@ -1776,41 +1791,34 @@ We make a number of claims about the above algorithm
 
 \begin{lemma}
 $ E[w(C)] \le  l \cdot  LP $
-
-\begin{proof}
-Define an indicator random variable
-
-\begin{equation}
-    z_{t, i} = \begin{cases}
-        1 & \text{ if } i \in C_t \\
-        0 & \text{ otherwise }
-\end{equation}
-
-Since $ C $ is the union of all $ C_i $, the weight of $ C $ is at most the sum of weights of all $ C_i $
-
-\begin{equation}
-    \sum^l_{t=1} E[w(C_t)] = \sum^l_{t=1} E[\sum_{i = 1}^m w_i z_{t,i}] = \sum^l_{t=1} \sum_{i = 1}^m w_i E[z_{t,i}] = \sum^l_{t=1} \sum_{i=1}^m w_i y_i = L = l \cdot  LP
-\end{equation}
-
-The intuition follows from realizing that the probability of an element being in the cover is $ y_i $, so the expectation of $ z_{t,i} $ is given by $ y_i $
-
-
-The second claim we make is that
-\begin{equation}
-    P(C \text{ $ C $ is a vertex cover }) \ge  1/2
-\end{equation}
-
-
-
-
-
-\end{proof}
-
-
-
 \end{lemma}
 
 
+
+\begin{proof}
+    Define an indicator random variable
+
+    \begin{equation}
+        z_{t, i} = \begin{cases}
+            1 & \text{ if } i \in C_t \\
+            0 & \text{ otherwise }
+        \end{cases}
+    \end{equation}
+
+    Since $ C $ is the union of all $ C_i $, the weight of $ C $ is at most the sum of weights of all $ C_i $
+
+    \begin{equation}
+        \sum^l_{t=1} E[w(C_t)] = \sum^l_{t=1} E[\sum_{i = 1}^m w_i z_{t,i}] = \sum^l_{t=1} \sum_{i = 1}^m w_i E[z_{t,i}] = \sum^l_{t=1} \sum_{i=1}^m w_i y_i = L = l \cdot  LP
+    \end{equation}
+
+    The intuition follows from realizing that the probability of an element being in the cover is $ y_i $, so the expectation of $ z_{t,i} $ is given by $ y_i $
+
+
+    The second claim we make is that
+    \begin{equation}
+        P(C \text{ $ C $ is a vertex cover }) \ge  1/2
+    \end{equation}
+\end{proof}
 
 
 
@@ -1866,7 +1874,7 @@ Consider an integer program as follows:
 
 
 \begin{equation}
-    
+    asdf
 \end{equation}
 
 

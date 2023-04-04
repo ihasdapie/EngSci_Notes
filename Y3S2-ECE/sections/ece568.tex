@@ -2165,146 +2165,226 @@ As a developer we can choose between IPSec and SSL dependong on our needs. SSL o
 
 
 
+\subsection{Malware}
 
 
+Malware includes is a large umbrella that overs malicious software. Types include viruses and worms\sn{replication programs}. rootkits\sn{hide or obscure fact that a system has been compromised}, backdoors\sn{Method for bypassing security systems} and so forth.
 
 
+Whereas viruses and worms replicate automatically, viruses are typically require a host program to infect and is slow-spreading and worms are stand-alone and spread automatically without human intervention (and so spread quite a lot faster).
 
 
+\subsubsection{Viruses}
 
+Viruses work by inserting their own instructions into existing programs, and then when the program is run, the virus is run as well. On execution the virus may propagate to other programs.
+Early viruses often infected the disk boot sector: a boost sector virus would load in memory when the disk is inserted and copy itself to other disks on the system (especially prevalent in the days of floppy disks).
 
+Viruses inserted at the beginning of the program or at the end of the program. In either case they must overwrite some sector of the program and then apply some fixup code to replicate the code that it overwrote. Viruses at the beginning of the program are limited in length since they can't overwrite too much of the program, while ones at the end are unlimited in length as long as they add a GOTO to the beginning of the program.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-03-18-34-13.png}
+    \caption{A virus may not want to repeatedly infect a same program, so it will often insert a signature}
+\end{figure}
 
+Virus scanners work by looking for \textit{signatures}, which are strings of bits corresponding to instructions found in known viruses. 
+A malware protection company can find viruses by using a honeypot farm\mn{A network of computers that are set up to look like a real system, but are actually isolated and monitored. The purpose is to attract attackers so that they can be observed and their attacks can be analyzed.}, with which they scan for signatures.
+Signatures should be long enough that that legitimate code is not mistakenly identified, but not too long such that scanners miss variants of viruses.
 
+\begin{blockquote}
+    The EICAR Anti-Virus test string is an executable that may be encoded in entirely typeable characters that basically all antivirus companies have in their signature lists and can be used to validate whether or not if an antivirus software works or not.
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-04-03-18-37-01.png}
+    \end{figure}
 
+\end{blockquote}
 
 
 
+Polymorphic viruses are viruses that change their signature to avoid detection. This is done by embedding a small decryption engine in the virus (usually a simple encryption scheme i.e. XOR) and having the virus logic live in an encrypted payload.
+The encryption key is generated randomly whenever the virus is transmitted, so the virus will have a different signature every time.
 
+Advanced virus scanners can detect polymorphic viruses by looking for suspect files and running them inside an emulator. Then when it is run the virus will have to decrypt itself and expose it's signature, which the virus scanner may now find.
 
+Metamorphic viruses are yet more sophisticated: they change their code on every infection by rewriting themselves.
+Typical code changes included: changing register allocations, using equivalent instruction sequences, changing order of sections of code, and so forth.
+Detecting them gets more difficult: anti-viruses may have to run the code in an emulator and then look for sequences of executed instructions, or scan for markers in infected files, and so forth.
 
 
+\subsubsection{Worms}
 
+Worms spread automatically by identifying and exploiting vulnerabilities in hosts\mn{For example the slammer worm infected 90\% of vulnerable hosts worldwide in under 10 minutes}.
 
 
+\begin{example}
+    The \textbf{Morris Worm} is the first worm and was related in 1988. It infected 6000 machines and caused 10-100M in damages. 
+    
 
+    \begin{itemize}
+        \item Included \textbf{server} and a \textbf{vector/bootstrap} program
+        \item Server looked for vulnerable remote target machines and tried to exploit a vulnerability
+        \item Created a shell on the target, uploaded target, compiled on target, and ran the vector
+        \item The vector downloaded the rest of the worm from the server and started the server on the newly infected host
+    \end{itemize}
 
+    This exploited four vulnerabilities
 
+    \begin{enumerate}
+        \item  \texttt{finger} program was vulnerable to buffer overflow
+        \item \texttt{sendmail} on many systems had be compiled with DEBUG. By connecting to the sendmail port and sending "DEBUG", the attacker received a root shell
+        \item Worm tried popular passwords on the target machine, the hashes for which were easily findable in \texttt{/etc/passwd}
+        \item The worm would try to connect to posts in \texttt{/etc/hosts.equiv}, which were machines the users can log into without a password
+    \end{enumerate}
 
 
+    Techniques it used to hide itself included
+    \begin{itemize}
+        \item limit inflecting already-infected machines
+        \item Deleted program files after they were loaded in memory, obscured program arguments, killed unneeded parent processes, etc
+    \end{itemize}
+\end{example}
 
+Modern worms aim to increase spreading speeds largely by using more advanced techniques for finding other vulnerable hosts (pre-seed worms with potentially vulnerable hosts), trying to infect local hosts first, and using UDP instead of TCP
 
 
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-03-18-57-31.png}
+    \caption{Worms tend to spread in a logistic fashion}
+\end{figure}
 
+\begin{example}
+    Stuxnet a worm from around 2009 that targeted uranium-enrichment centrifuges at Natanz plat in Iran that introduced the notion of zero-day exploits.
+    In particular stuxnet took advantage of at least four zero-day exploits:
 
+    \begin{enumerate}
+        \item Windows printer sharing
+        \item Windows keyboard driver
+        \item STEP7 PLC Controller
+        \item LNK Exploit
+    \end{enumerate}
 
+    Windows uses a signing mechanism to validate device driver and OS files. Key files are signed by their author using a public-key signature.
+    The files used by stuxnet were signed using stolen certificates from two major hardware manufacturers (JMicron and RealTek)\mn{Which happened to have adjacent headquarters in Taiwan}
+    It was controlled and monitored by a pair of websites (which happened to be mypremierfutbol.com and todaysfutbol.com) which received reports of infected machines and distributed updated commands/payload/etc.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-04-03-19-08-16.png}
+        \caption{Infected hosts could be traced back to five primary infections related to Iranian nuclear production}
+    \end{figure}
 
+    PLCs are small programmable controllers that are often used in industrial settings. They tend to have poor security becuase they are often assumed to be isolated on an internal network.
 
+    It is also of note that stuxnet was written to target one specific network: though it infected thousands of industrial control systems around the world, it would only deploy if it had exactly 33 frequency counters at 1064 Hz -- which was the exact layout of the Iranian production facility.
 
+    Stuxnet exploited a vulnerability in the Siemens STEP7 PLC controller that allowed it to upload and execute arbitrary code to rapidly speed up and slow down the centrifuges, and was able to reach the PLC controllers by infecting the various windows machines on the network via the drivers \& windows printer sharing.
+    It also disabled monitoring alarms and modified status reports of the centrifuges to make it appear as if they were operating normally.
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{img/image_2023-04-03-19-11-58.png}
+    \end{figure}
 
+\end{example}
 
+\begin{definition}
+    \textbf{Zero-day exploit}: An previously unreported and exploitable vulnerability in a system.
+    These can be quite valuable depending on their nature, and are often sold on the black market.
+    Very few pieces of malware use zero-day exploits (on the order of $ \tilde0.0001\% $)
+\end{definition}
 
+Worms defenses include:
+\begin{itemize}
+    \item Update your software
+    \item Use a firewall
+    \item Disable unnecessary services
+\end{itemize}
 
+Areas of research include early bird\sn{UC San Diego}: detecting worms before they spread via packet sniffing, and Shields\mn{Microsoft Research}: recognizing that vulnerabilities often lie in obscure paths, so blocking them if applicable.
 
 
+\subsubsection{More}
 
 
+\begin{definition}
+Botnets are a collection of compromised machines that run under a common command-and-control infrastructure.
+ They are often used for DoS attacks, spamming, spyware, and so forth.
+\end{definition}
 
 
 
+\begin{definition}
+    Rootkits is any software designed to hide the fact that a system has been compromised, usually by subverting the mechanisms that report on processes, files, etc.
+    Rootkits may be memory-resident, or may be installed as a kernel module, etc, and can also live in user or kernel modes.
+    User mode rootkits intercept library or system calls at the user level and modifies returned results, and kernel mode rootkits do the same but in the kernel.
+\end{definition}
 
 
+In 2005 Sony BMG included copy protection measures on 102 albums. So they created a rootkit in the CDs that would install automatically and interfere with the normal way that OSes play CDs.
+Ironically Sony's rootkit included a number of open source libraries that violated their licenses, contained more vulnerabilities that were exploitable by other malware and viruses, and so forth.
+And then the rootkit uninstaller they provided opened more security holes!
 
 
 
+\subsection{Content-type attacks}
 
+JPEG files are data-only but can cause a lot of damage depending on the parser.
+Multiple vulnerabilities have appeared over the years in libraries that parse JPEGs.
+For example: compression/zip/image bombs that are tiny files that become huge when uncompressed, and can cause a denial of service by filling up the disk.
 
+Many popular document types are extremely complex e.g. the PDFv6 spec is 1310 pages.
+A content-type attack exploits vulnerability in the parser of a document type to cause a denial of service or execute arbitrary code, e.g. how PDFs may include javascript.
 
+PDF files have been the most-targeted document type for content-type attacks, and have been the subject of many vulnerabilities. Also has the most proof-of-contacts.
 
+PDF files start with a lien describing the PDF language version. The remainder of the file describes the tree structure of the document
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-03-19-29-12.png}
+\end{figure}
 
+Data is uncompressed by default, but often compressed to obfuscate the content. Checking PDF files for malicious code is not easy.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-03-19-29-42.png}
+    \caption{PDF files can contain malicious javascript and be automatically called when the document opens}
+\end{figure}
 
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-03-19-30-08.png}
+    \caption{The following are equivalent}
+\end{figure}
 
+One solution is to just disable JavaScript, but that breaks a number of PDF forms (and JS may not be the only attack vector: parsing engines are also vulnerable)
+For example, CVE-2008-2992 allowed an attacker to execute arbitrary code via a printf implementation vulnerability.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-03-19-31-52.png}
+    \caption{Buffer overflow in printf that allows for arbitrary code execution. TLDR: stick a ton of NOP into the heap and then buffer-overflow with util.printf("\%45000f", <somebignum>) so that we end up in some part of the heap. Then there's a good chance we hit the nop sled and get to our shellcode}
+\end{figure}
 
 
+Turning off library features break standards compliance, and so is not always a good solution.
+Also, virus scanners are reactive and not proactive. A more generalized approach is needed, i.e those we traditionally used for operating systems. For example adobe reader for windows ships with DEP (non-executable stack/heap) on by default.
 
+\subsubsection{Future Trends}
 
+Dorifel virus (late 2012). Downloaded onto many systems already infected with another piece of malware designed to steal banking credentials. Launches on startup and takes some steps to avoid detection e.g. self-termination if it sees taskmgr.exe. Uses a right-to-left unicode vulnerability to hide itself from casual inspection
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-03-19-37-39.png}
+    \caption{Would create files that were actually \texttt{exe}s but were rendered as benign files due to the RLO character}
+\end{figure}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+\marginnote{Another Unicode vulnerability is registering domains using lookalike Unicode characters} 
 
 
 
