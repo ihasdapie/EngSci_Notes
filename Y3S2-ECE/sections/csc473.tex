@@ -1685,7 +1685,7 @@ Since we assume that the primal and dual are feasible, then their values $ v_p, 
 Since the optimal value of the dual LP is $ v_d $, there does not exist any $ y \in \mathbb{R}^m$ such that $ y \ge 0  $, $ A^ty \ge c $, and $ y^tb < v_d$. This implies that 
 
 \begin{equation}
-    
+    todo
 \end{equation}
 
 
@@ -1873,13 +1873,135 @@ Consider an integer program as follows:
 
 
 
+
+\subsubsection{Chernoff Bound}
+
+
+\begin{definition}
+    \textbf{Chernoff Bound}: 
+
+Let $ X_1 \ldots,  X_n \in \left\{ 0, 1 \right\}  $ be independent random variables, not necessarily uniform or identically distributed. If $ X = \sum^n_{i=1} X_i $ and $ E[x] \le \mu $
+
 \begin{equation}
-    asdf
+    P(X \ge (1+\delta)\mu) \le  (\frac{e^\delta}{(1+\delta)^{(1+\delta)}})^\mu
+\end{equation}
+
+For $ 0 \le  \delta \le  1 $, RHS is $ \le e^{^\frac{-\delta^2\mu}{3}} $
+
+\marginnote{Compare this with $ \frac{1}{\delta^2\mu} $ from Chebyshev's inequality: the Chernoff bound is exponentially smaller than Chebyshev's}
+\end{definition}
+
+
+The Chernoff trick is as follows: for any $ t\ge 0 $, by Markov's inequality we have
+
+
+\begin{equation}
+    P(X \ge (1+\delta) \mu) = P(e^{tX} \ge e^{t(1+\delta)\mu}) \le \frac{E[e^{tX}]}{e^{t(1+\delta)\mu}}
+\end{equation}
+
+\marginnote{$ X = X_1 + \ldots, X_n $, $ X_1 \ldots, X_n \in \left\{ 0,1 \right\}  $ and independent}
+
+Note, by independence, 
+
+\begin{equation}
+    E[e^{tX}] = E e^{t\sum^n_{i=1} X_i}  = E \left[ \prod^n_{i=1} e^{tX_i} \right] = \prod^n_{i=1} E[e^{tX_i}]
+\end{equation}
+
+
+So now the question is can we bound $ E[e^{tX_i}] $ in some useful way?
+Since $ E[X] \le  \mu $,
+
+\begin{equation}
+    P(X \ge (1+\delta) \mu) = \le \frac{E[e^{tX}]}{e^{t(1+\delta)\mu}} \le  \frac{e^{(e^t - 1)\mu}}{e^{t(1+\delta)\mu}} = \exp \left\{ -\mu + e^t \mu - t(1+\delta) \mu \right\} 
+\end{equation}
+
+We then want to minimize the RHS w.r.t $ t $, i.e. take the derivative and set it to 0\mn{Validate that it is a convex function}
+
+\begin{equation}
+    t = \ln (1+\delta)
+\end{equation}
+
+So if $ \delta \ge 0  $, then $ t \ge 0 $, and we have the following bound
+
+\begin{equation}
+    P(X \ge  (1+\delta)\mu) \le  \exp \left( \mu \delta - \ln (1+\delta) (1+\delta) \right)  = \frac{e^\delta}{(1+\delta)^{(1+\delta)}}^\mu
 \end{equation}
 
 
 
+\begin{example}
+    Suppose we throw $ n $ balls into $ n $ bins uniformly and at random.
 
+\begin{theorem}
+Theorem: No bin has no more than $ O(\frac{\log n}{ \log \log n }) $ balls with probability $ \ge  \frac{1}{2} $
+\end{theorem}
+
+\marginnote{We can prove any combination of $ n $ balls or $ m $ bins quite easily with Chernoff bounds}
+
+\begin{proof}
+
+Let the random variable $ X_{ij} = 1 $ if ball $ j $ lands in bin $ i $, $ 0 $ otherwise.
+\begin{equation}
+    X_{i} = \sum^n_{j=1} X_{ij} = \text{number of balls in bin } i
+\end{equation}
+
+\begin{equation}
+    E[X_{ij}] = P[X_{ij} = 1] = \frac{1}{n}
+\end{equation}
+
+\begin{equation}
+    E[X_i] = \sum^n_{j=1} E[X_{ij}] = \frac{n}{n} = 1
+\end{equation} 
+
+
+Apply Chernoff with $ \mu = 1 $ and $ 1+\delta = \frac{c \log 2n}{ \log \log n } $
+
+\begin{equation}
+    P[X_i \ge   \frac{c \log 2n}{ \log \log n }] \le \frac{e^\delta}{(1+\delta)^{1+d}}^1
+\end{equation}
+
+
+Let's handwave a little bit: take $ 1+\delta \gg e $ 
+
+\begin{equation}
+    \approx \frac{1}{(1+\delta)^{1+\delta}} = \exp \left\{ \frac{-c \log 2n}{\log \log n} 
+        log \left( \frac{c \log 2n}{\log \log n} \right) \right\}
+    \approx \le \frac{1}{((2n)^c)} \le  \frac{1}{2n}
+\end{equation}
+
+\marginnote{The right term in the $ \exp $ is approximately on the order of $ \log \log n$ and we can cancel things out}
+
+And then apply an union bound
+
+
+
+    
+\end{proof}
+
+\end{example}
+
+
+
+\begin{example}
+    Multi commodity Flow Problem:
+
+    Given a chip with wire channels, connect locations with wires such that no common channel is overloaded.
+
+    More formally, given an undirected graph $ G = (V, E) $ and vertices $ s_1, t_1, \ldots, s_k t_k$, find paths in $ P_i $ in $ G $ connecting $ s_i $ and $ t_i $ so that the maximum number of paths going through any edge is minimized, i.e. minimize the load on any edge.
+    \mn{This is NP hard}
+\end{example}
+
+The LP relaxation is as follows
+
+Let $ P_i $ be all paths between $ s_i, t_i $. $ P = \bigcup^k_{i=1} P_i $.
+Then introduce variable $ x_p $ for every $ P_i $ to relax the exponential size
+
+TODO: take screenshots of the problems
+
+And then this reduces the size of the problem to one that is polynomial in the size of the input. 
+Then we can solve the LP to get the optimal solution (of the relaxed problem), $ y_p $.
+This gives us a probability distribution over the paths over any pair of terminals. Then we can sample from said probability distribution and that gives us our approximation algorithm.
+If $ OPT \ge 1 $ it turns out we can get a $ O(\frac{\log n}{ \log \log n }) $ approximation.
 
 
 
