@@ -1807,7 +1807,7 @@ The minimum weight perfect matching problem may be formulated as follows:
         \min \sum_{i, j} c_{ij} x_{ij} & \text{ subject to}  \\
          \sum_j x_{ij} = 1 &\qquad i \in A  \\
          \sum_i x_{ij} = 1 &\qquad j \in B  \\
-         x_{ij} \ge  0 & i \in A, j \in B \\
+         x_{ij} \ge  0 &\qquad i \in A, j \in B \\
                        & x_{ij} \text{is an integer}
     \end{split}
 \end{equation}
@@ -1825,7 +1825,7 @@ A \textit{relaxed} problem, the linear program $ P $ is defined similarly to the
         \min \sum_{i, j} c_{ij} x_{ij} & \text{ subject to}  \\
          \sum_j x_{ij} = 1 &\qquad i \in A  \\
          \sum_i x_{ij} = 1 &\qquad j \in B  \\
-         x_{ij} \ge  0 & i \in A, j \in B
+         x_{ij} \ge  0 &\qquad i \in A, j \in B
     \end{split}
 \end{equation}
 
@@ -1874,7 +1874,7 @@ We had previously handwoven how to modify $ y $.
 
     \item Assume no augmenting path exists. Then $ U \cap L \cap B  = \emptyset $. 
     \item By K\"oning's theorem, no edges of $ G_y $ are between $ A \cap L $ and $  B - L $
-    \item Define $ \delta = \min \left\{ c_{a,b} - y_a - y_b: a \in A \cap L, b \in B - L \right\} > 0  $
+    \item Define $ \delta = \min \left\{ c_{a,b} - y_a - y_b: a \in A \cap L, b \in B - L \right\} > 0  $. In other words take a subset of the vertices and add/subtract a small value to/from the vertices in the subset, in our case the largest value such that $ y $ is still feasible, since adding smallest $ c_{ab} - y_a - y_b $ to $ y_a $ or subtracting it from $ y_b $ still permits the inequality $ y_a + y_b <= c_{ab} $ to hold.
         Apply modifications
 
         \begin{itemize}
@@ -1885,6 +1885,9 @@ We had previously handwoven how to modify $ y $.
 
 By definition after the modification with $ \delta $ $ y $ is still feasible. Also, $ M \subseteq E_y $ after modification still since if $ (a,b) \in M, b \in B \cap L   $ , then $ a \in A \cap L $.
 All reachable vertices are still reachable in the new $ G_{y, M}$, and $ b $ is now newly reachable from $ a $.
+
+On termination we have an incidence vector of a perfect matching and a dual feasible solution. By complementary slackness they must therefore be optimal.
+Since we picked the perfect matching from tight edges we have also proved an integral solution to the linear program relaxation, and therefore an optimal solution to the integer program.
 
 
 The presented approach is $ O(n^4) $: Each $ \le \frac{n}{2} $ modifications to $ y $, $ M  $ grows by 1 edge\mn{Each modification to $ y $ a new vertex in $ B $ enters $ L $, but only after $ \frac{n}{2} $ does an exposed vertex enter}. Total number of iterations is $ O(n^2) $, each of which are $ O(n^2) $. Better data structures can improve this to $ O(n^3) $
