@@ -1682,18 +1682,223 @@ Now what we aim to show is that, if $ b \notin C $, then there exists a hyperpla
 
 Using Farkas's Lemma, we can prove the theorem.
 Since we assume that the primal and dual are feasible, then their values $ v_p, v_d $ are finite and achieved. 
-Since the optimal value of the dual LP is $ v_d $, there does not exist any $ y \in \mathbb{R}^m$ such that $ y \ge 0  $, $ A^ty \ge c $, and $ y^tb < v_d$. This implies that 
+Since the optimal value of the dual LP is $ v_d $, there does not exist any $ y \in \mathbb{R}^m$ such that $ y \ge 0  $, $ A^ty \ge c $, and $ y^tb < v_d$. 
+This implies that the intersection of the hyperplane and $ P $  is non-empty and $ v_p \ge  v_d $. However, by weak duality $ v_p \le d $. Therefore, $ v_p = v_d $.
 
-\begin{equation}
-    todo
-\end{equation}
-
-
-
-
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-06-02-03-46.png}
+\end{figure}
 
 
 \marginnote{Also, if we take the dual of a LP twice we get the original LP back}
+
+
+\begin{theorem}
+    \textbf{Complementary Slackness}
+
+    Let $ x $ be a feasible solution to the primal LP, and let $ y $ be a feasible solution to the dual LP. Then $ x, y $ are optimal if and only if:
+
+    \begin{equation}
+        \forall i \in \left\{  1 \ldots,  m \right\} : (b_i - (Ax)_i)y_i = 0
+    \end{equation}
+
+    \begin{equation}
+        \forall j \in \left\{  1 \ldots,  n \right\} : ((A^Ty)_j - c_j)x_j = 0
+    \end{equation}
+
+    \begin{proof}
+        $ x $ and $ y $ are optimal $ \iff $ $ c^Tx = b^Ty = v $, so
+
+        \begin{equation}
+            y^T Ax \le  y^T b = v = c^Tx \ge  y^T Ax \Rightarrow y^T Ax = c^Tx = y^T b
+        \end{equation}
+
+
+    \end{proof}
+    
+    In other words, a primal feasible solution $ x $ and dual feasible solution $ y $ are optimal if and only if whenever a dual variable $ y_i $ is positive, the corresponding primal constraint is tight ($ (Ax)_i = b_i$). Similarly, whenever a primal constraint is slack ($ (Ax)_i < b_i $), then the corresponding dual variable is 0. The same applies in the opposite direction; whenever a primal variable $ x_j $ is positive, the corresponding dual constraint is tight ($ (A^ty)_j = c_j $), and if the dual constraint is slack ($ (A^ty > c_j) $) then the dual variable is $ 0 $. In more concise terms at most one of the constraints in each pair is slack.
+
+    
+    
+
+
+
+\end{theorem}
+
+
+\subsection{Bipartite Matching}
+
+A bipartite graph is a graph whose vertices can be partitioned into two disjoint sets $ A, B $ such that every edge connects a vertex in $ A $ to a vertex in $ B $. A matching $ M $ is a subset of edges such that each vertex of $ V $ is incident to at most one edge of $ M $. If a vertex $ v $ has no edge of $ M $ incident to it. A perfect matching has no exposed vertex
+
+\subsubsection{Maximum Cardinality Matching}
+The goal of the Maximum Cardinality Matching problem is to find a matching of maximum size.
+There exists a duality between the size of the upper bound of the maximum cardinality matching and the lower minimum size of a vertex cover.
+By definition, a vertex cover $ C $ is a set such that all edges are incident to at least one vertex in $ C $. 
+Weak duality (the maximum size of a matching is at most the minimum size of a vertex cover) follows because for any matching $ M $, $ C $ must contain at least one of the endpoints of each edge in $ M $.
+
+\begin{theorem}
+    Strong duality between the maximum size of a matching and the minimum size of a vertex cover holds for bipartite graphs.
+\end{theorem}
+
+\begin{definition}
+    \textbf{Alternating path}: An alternating path in $ M $ is one that alternates between edges in $ M $ and $ E-M $
+\end{definition}
+
+\begin{definition}
+    \textbf{Augmenting Path}: An augmenting path with respect to $ M $ is an alternating path that starts and ends at exposed vertices.
+\end{definition}
+
+Note that an augmenting path w.r.t. $ M $ contains $ k $ edges of $ M $ and $ k+1 $ edges not in M. And the endpoints must be on different sides of the bipartition, so if we get
+
+\begin{equation}
+    M' = M \Delta P \equiv (M-P) \cup (P-M)
+\end{equation}
+
+where $ P $ is the augmenting path we get a new matching $ M' $ that is one edge larger than $ M $, i.e. $ |M'| = k + 1 $.
+
+\begin{theorem}
+    A matching $ M $ is maximum if and only if there is no augmenting path w.r.t. $ M $.
+    The proof is simple via a proof by contradiction from the definition of an augmenting path.
+\end{theorem}
+
+
+An algorithm for finding a maximum matching is to start with an empty matching and repeatedly find an augmenting path and add it to the matching. 
+We know that it will terminate by the theorem above, and specifically, it will terminate after $ O(\mu) $ augmentations, where $ \mu $ is the size of the maximum matching. \marginnote{We know $ \mu \le  \frac{n}{2}$ given a bipartite graph}
+This sounds great, but how can we find an augmenting path? Construct directed graph $ D $ where $ D $ has a vertex for each exposed vertex in $ M $ and an edge from $ A \to B $ if it does not belong to $ M $ and $ B \to A $ otherwise.
+There exists an augmenting path in $ G $ with respect to $ M $ $ \iff $ there exists a directed path in $ D $ between exposed vertices in $ A $ and $ B $. DFS can be used on this graph to give an $ O(m) $ algorithm to finding an augmenting path in $ G $, leading to an $ O(nm) $ algorithm for maximum cardinality matching which can be cut down to $ O(m \sqrt{n})$ by augmenting among several paths at the same time.
+
+When the algorithm terminates, $ C* = (A-L) \cup (B \cap L) $ is a vertex cover, and $ |C*| = |M*|$
+
+\begin{proof}
+    A proof by contradiction can be used to show that it is a vertex cover.
+
+    Suppose $ C* $ is not a vertex cover. Then $ \exists e = (a,b)  $ with $ a \in A\cap L $ and $ b \in B - L $, i.e. cannot belong to the matching. This means that $ e $ is in $ E - M $ and was directed (in $ D $) from $  A \to B $.
+    This implies that $ b $ can be reached from an exposed vertex in $ A $  via a directed path in $ D $ through $ e $\mn{Since it is the only such edge} which contradicts that $ b \in B-L $.
+
+
+    The second part of the proof, that every vertex in $ C $ covers exactly one edge in $ M $ follows from
+
+    \begin{itemize}
+        \item No vertex in $ A-L $ and $ B \cap L $ is exposed, by definition or by the fact that the algorithm terminates.
+        \item There is no edge of the matching between $ A-L $ and $ B \cap L $, otherwise $ a $ would be in $ L $
+    \end{itemize}
+
+    This implies that every vertex in $ C* $ is matched and the corresponding edges are distinct -- so $ |C*| \le  |M*| $. The opposite direction holds by weak duality, so $ |C*| = |M*| $.
+
+\end{proof}
+
+
+\subsubsection{Minimum Weight Perfect Matching}
+
+\begin{blockquote}
+    There are $ n $ jobs and $ n $ workers. Each job $ i $ requires a worker $ j $ to complete it. Each worker $ j $ has a cost $ c_j $ to work on a job. Find a task assignment of minimum cost.
+\end{blockquote}
+
+\begin{itemize}
+    \item Assume $ G $ has a perfect matching $ M $, $ |M| = \frac{n}{2} $. Also assume that it is a complete bipartite graph, i.e. $ \exists e=(a,b) \forall a \in A, b \in B $
+\end{itemize}
+
+
+The minimum weight perfect matching problem may be formulated as follows:
+
+\begin{equation}
+    \begin{split}
+        \min \sum_{i, j} c_{ij} x_{ij} & \text{ subject to}  \\
+         \sum_j x_{ij} = 1 &\qquad i \in A  \\
+         \sum_i x_{ij} = 1 &\qquad j \in B  \\
+         x_{ij} \ge  0 &\qquad i \in A, j \in B \\
+                       & x_{ij} \text{is an integer}
+    \end{split}
+\end{equation}
+
+\marginnote{Convince yourself that any solution to this problem corresponds to a matching}
+
+This is an \textit{integer problem}, which is a special case of the \textit{linear program} problem where the solutions must be integers.
+A \textit{relaxed} problem, the linear program $ P $ is defined similarly to the integer program, but without the constraint that $ x_{ij} $ is an integer
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-06-03-54-44.png}
+\end{figure}
+\begin{equation}
+    \begin{split}
+        \min \sum_{i, j} c_{ij} x_{ij} & \text{ subject to}  \\
+         \sum_j x_{ij} = 1 &\qquad i \in A  \\
+         \sum_i x_{ij} = 1 &\qquad j \in B  \\
+         x_{ij} \ge  0 &\qquad i \in A, j \in B
+    \end{split}
+\end{equation}
+
+We can see that if a linear program relaxation has an integral solution then it must be an optimum solution to the integer program.
+In the special case of the perfect matching problem the constraint matrix has a special form and the following theorem holds
+
+
+\begin{theorem}
+    Any extreme point of the relaxed problem $ P $ is a $ 0-1 $ vector and is the incidence vector of a perfect matching
+\end{theorem}
+
+The \textbf{Hungarian Algorithm} solves this problem in $ O(n^3) $ time.
+
+
+\begin{codebox}
+\Procname{$\proc{hungarian}(G)$}
+\li $  y = 0, M = \emptyset$
+\li \While $ M $ is not perfect \Do 
+\li     \If $ \exists $ augmenting path $ P  \in  G_y = (A \cup B, E_y) $ \Then 
+\li         $ M = M \Delta P $
+\li     \Else
+\li         modify $ y $ while maintaining $ M \subseteq E_y $ \End \End
+\end{codebox}
+
+\begin{blockquote}
+    Assume cost $ c_{ab} $ is non-negative. For any matching $ M $ we may formulate the dual problem: $ \forall a \in A, b \in B $, $ y_a + y_b \le  c_{ab} $. Then, to minimize the cost, we aim to maximize the dual linear program corresponding to $ y_a + y_b $. Also, define $ E_y $ to be the set of tight edges corresponding to some solution $ y $, i.e. $ E_y = \left\{ (a,b): y_a + y_b = c_{ab} \right\}  $
+
+\end{blockquote}
+
+\begin{itemize}
+    \item Start with some dual feasible solution, i.e. $ y =0  $. 
+    \item Repeatedly augment $ M $ until it is perfect. At every time step if we can't augment $ M $ using tight edges then we modify $ y $ until we can.
+    \item Our goal is to find a perfect matching $ M $ while also satisfying the invariant $ M \subseteq E_y $    \item By maintaining the invariant we have, by complementary slackness, that $ M $ is a min cost perfect matching\mn{$ M $ is a perfect matching and $ M \subseteq E_y $ is comprised of tight edges, so the slack bounds on $ y $ are OK and in fact still lead to $ M $ being an optimal min cost perfect matching}
+\end{itemize}
+
+We had previously handwoven how to modify $ y $. 
+
+\begin{itemize}
+    \item Let $ G_{y, M} $ be a directed graph with edges in $ M $ from $ B \to A $ and edges not in $ M $ from $ A \to B $. By extension $ G_{y, M} $ is also a graph of tight edges
+    \item Let $ U $ be the set of exposed vertices and $ L $ be vertices reachable in $ G_{y, M} $ from $ U \cap A$. 
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.8\linewidth]{img/image_2023-04-06-04-28-29.png}
+            \caption{In other terms: $ L $ is the set of vertices reachable from the left side of the bipartite graph through the directed graph we built, from an exposed (unmatched) vertex}
+        \end{figure}
+
+    \item Assume no augmenting path exists. Then $ U \cap L \cap B  = \emptyset $. 
+    \item By K\"oning's theorem, no edges of $ G_y $ are between $ A \cap L $ and $  B - L $
+    \item Define $ \delta = \min \left\{ c_{a,b} - y_a - y_b: a \in A \cap L, b \in B - L \right\} > 0  $. In other words take a subset of the vertices and add/subtract a small value to/from the vertices in the subset, in our case the largest value such that $ y $ is still feasible, since adding smallest $ c_{ab} - y_a - y_b $ to $ y_a $ or subtracting it from $ y_b $ still permits the inequality $ y_a + y_b <= c_{ab} $ to hold.
+        Apply modifications
+
+        \begin{itemize}
+            \item $ y_a \leftarrow y_a + \delta $ for $ a \in A \cap L $
+            \item $ y_b \leftarrow y_b - \delta $ for $ b \in B - L $
+        \end{itemize}
+\end{itemize}
+
+By definition after the modification with $ \delta $ $ y $ is still feasible. Also, $ M \subseteq E_y $ after modification still since if $ (a,b) \in M, b \in B \cap L   $ , then $ a \in A \cap L $.
+All reachable vertices are still reachable in the new $ G_{y, M}$, and $ b $ is now newly reachable from $ a $.
+
+On termination we have an incidence vector of a perfect matching and a dual feasible solution. By complementary slackness they must therefore be optimal.
+Since we picked the perfect matching from tight edges we have also proved an integral solution to the linear program relaxation, and therefore an optimal solution to the integer program.
+
+
+The presented approach is $ O(n^4) $: Each $ \le \frac{n}{2} $ modifications to $ y $, $ M  $ grows by 1 edge\mn{Each modification to $ y $ a new vertex in $ B $ enters $ L $, but only after $ \frac{n}{2} $ does an exposed vertex enter}. Total number of iterations is $ O(n^2) $, each of which are $ O(n^2) $. Better data structures can improve this to $ O(n^3) $
+
+
+
+
+
+
+
+
 
 
 
