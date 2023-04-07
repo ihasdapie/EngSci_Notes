@@ -1697,134 +1697,6 @@ Since the optimal value of the dual LP is $ v_d $, there does not exist any $ y 
 
 
 
-\subsection{Rounding \& Approximation Algorithms}
-
-Many natural and important optimization problems are NP-hard. So what do we do? 
-
-\begin{enumerate}
-    \item Approximation: output an approximately optimal solution in worst-case polynomial time
-    \item Algorithms that are efficient on special classes of the problem, i.e. Max Cut problem in planar graphs.
-    \item Algorithms that are exponential in some parameter, i.e. $ 2^{O(k)} poly(n) $ and then hope that the parameter is small.
-\end{enumerate}
-
-\subsubsection{Deterministic Rounding}
-Our goal is to show that 
-
-\begin{equation} 
-    LP(G, w) \le OPT(G, w) \le 2 \cdot  LP(G, w)
-\end{equation}
-
-Let $ y $ be an optimal solution and define
-
-\begin{equation}
-    C = \left\{  u \in V : y_u \ge  \frac{1}{2} \right\} 
-\end{equation}
-
-Note:
-
-\begin{equation}
-    \begin{split}
-        x_u = 1 &\Leftrightarrow u \in C \Leftrightarrow y_u \ge  \frac{1}{2} \\
-        x_u = 0 \le  y_u < \frac{1}{2}\\
-    \end{split}
-    \label{eq:}
-\end{equation}
-
-\begin{enumerate}
-    \item C is a vertex cover
-\mn{consider some edge in the graph with endpoints $ y_u, y_v $.
-    If $ (u, v) $ is an edge ($ (u,v) \in E $), then $ y_u + y_v \ge  1 $.
-    Then, $ \max \left\{  y_u, y_v \right\}  \ge  \frac{1}{2} \Rightarrow \left\{ u, v \right\}  \cap C \neq \emptyset$
-}
-    \item $ w(C) \le  2 \cdot  LP$, since $ w(C) = \sum w_u x_u \le \sum w_n y_n \text{ = LP } $
-\end{enumerate}
-
-\marginnote{
-Note that although the LP does not always have an integral optimal solution, it will always have a solution that uses 0, 1, or half.}
-
-
-\subsubsection{Set Cover}
-
-Given an input of sets $ S_1 \ldots,  S_m \subseteq [n] $ where $ \bigcup^m_{i=1} S_i = [n]  $ and weights $ w \in \mathbb{R}^m $, find $ C \subseteq [m] $ such that
-
-\begin{itemize}
-    \item $ \bigcup_{i \in C} S_i = [n] $
-    \item $ w(C) = \sum_{i \in C} w_i $ is minimized
-\end{itemize}
-
-\marginnote{Note that vertex cover is a special case, since no element appears in a set more than once. We're looking here for a factor $ O(log(n)) $ approximation, which is the best possible assuming $P != NP$}
-
-Our approach to relaxing and rounding the problem is to use the same approach as before.
-
-Integer program:
-
-\begin{equation}
-    \begin{split}
-        \min \sum_{i=1}^m w_i x_i \\
-        \text{subject to} \\
-        \sum_{i, j \in S}^m x_i S_i \ge 1 \text{ for all } j \in [n] \\
-        x_i \in \left\{ 0, 1 \right\} \text{ for all } i \in [m]
-    \end{split}
-\end{equation}
-
-TODO: make sure that the above is correct.
-
-Summing over all the sets that contain $ j $ and adding up all of the indicator variables\sn{indicator variable $ x_i = 1 \Leftrightarrow i \in C $}
-So for every $ j $ at least one of the $ x_i $ is 1, i.e. it should be in the cover.
-
-
-Randomized Rounding:
-
-\begin{codebox}
-\li$ y $ = optimal LP solution
-\li\For $  t \gets 1 \ldots, l = ln(2n) $ \Do 
-\li    $ C_t = \emptyset $
-\li    For $ i \ldots,  m $ add $ i $ to $ C_t $ with probability $ y_i $ \End
-\li$ C = C_1 \cup \ldots, C_l $
-\end{codebox}
-
-
-The idea behind this is to create a bunch of mini set set covers, and then 
-
-
-We make a number of claims about the above algorithm
-
-\begin{lemma}
-$ E[w(C)] \le  l \cdot  LP $
-\end{lemma}
-
-
-
-\begin{proof}
-    Define an indicator random variable
-
-    \begin{equation}
-        z_{t, i} = \begin{cases}
-            1 & \text{ if } i \in C_t \\
-            0 & \text{ otherwise }
-        \end{cases}
-    \end{equation}
-
-    Since $ C $ is the union of all $ C_i $, the weight of $ C $ is at most the sum of weights of all $ C_i $
-
-    \begin{equation}
-        \sum^l_{t=1} E[w(C_t)] = \sum^l_{t=1} E[\sum_{i = 1}^m w_i z_{t,i}] = \sum^l_{t=1} \sum_{i = 1}^m w_i E[z_{t,i}] = \sum^l_{t=1} \sum_{i=1}^m w_i y_i = L = l \cdot  LP
-    \end{equation}
-
-    The intuition follows from realizing that the probability of an element being in the cover is $ y_i $, so the expectation of $ z_{t,i} $ is given by $ y_i $
-
-
-    The second claim we make is that
-    \begin{equation}
-        P(C \text{ $ C $ is a vertex cover }) \ge  1/2
-    \end{equation}
-\end{proof}
-
-
-
-
-
-
 
 
 
@@ -1870,6 +1742,208 @@ Let $ OPT(G, w) = \min \left\{  w(C): C \text{ is a vertex cover } \right\}  $
 
 
 Consider an integer program as follows:
+
+
+\subsection{Rounding \& Approximation Algorithms}
+
+Many natural and important optimization problems are NP-hard. So what do we do? 
+
+\begin{enumerate}
+    \item Approximation: output an approximately optimal solution in worst-case polynomial time
+    \item Algorithms that are efficient on special classes of the problem, i.e. Max Cut problem in planar graphs.
+    \item Algorithms that are exponential in some parameter, i.e. $ 2^{O(k)} poly(n) $ and then hope that the parameter is small.
+\end{enumerate}
+
+
+\subsubsection{Min Weighted Vertex Cover}
+One such problem that we may be interested in is the generalized vertex cover problem, which is NP-hard for general graphs. However, we may arrive at a Factor 2 approximation\mn{Can find a cover $ C $ in polynomial time such that $ w(C) \le  2 \cdot w(OPT)$ where $ OPT $ is the optimal solution} via formulations as an integer program, relaxing to an LP, and then rounding the possibly optimal LP solution to a $ \left\{ 0, 1 \right\}  $ IP solution (or something close to it).
+In this section we will consider a generalization of the vertex cover problem, where we are given a graph $ G = (V, E) $ and vertex weights $ w \in R^V $ and we want to find a min-weight vertex cover (not just a vertex cover of min size).
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-06-13-36-55.png}
+    \caption{The IP is described by the constraint where $ x_u = 1 $ if $ u $ is in $ C $. The relaxation is the same but with the variables names changed and the integer constraint dropped. Also we can remove the constraint that $ y_u \le 1 $ if we want but in any case we are minimizing on $ y_u $ and we are rounding off to $ \left\{ 0, 1 \right\}  $ anyways}
+\end{figure}
+
+
+\subsubsection{Deterministic Rounding}
+Our goal is to show that 
+
+\begin{equation} 
+    LP(G, w) \le OPT(G, w) \le 2 \cdot  LP(G, w)
+\end{equation}
+
+\begin{blockquote}
+    Deterministic rounding: round to $ 1 $ if $ \ge \frac{1}{2} $ and $ 0 $ otherwise.
+\end{blockquote}
+
+Let $ y $ be an optimal solution and define the set $ C $ of vertex cover vertices from the LP
+
+\begin{equation}
+    C = \left\{  u \in V : y_u \ge  \frac{1}{2} \right\} 
+\end{equation}
+
+
+For this scenario $ x_u = 1 $ in the integer program implies $ u \in C $ and therefore $ y_u \ge \frac{1}{2} $ in the LP. Conversely if $ x_u = 0 $ in the IP then $ y_u < \frac{1}{2} $.
+
+We make two claims about $ C $:
+
+\begin{enumerate}
+    \item $ C = \left\{  u \in V : y_u \ge  \frac{1}{2} \right\} $ is a vertex cover. The proof follows from the fact that if an edge $ (u,v) $ we have weights $ y_u + y_v \ge  1 $, the edge $ E $ must be in the vertex cover. $ C $ is the set of vertices with weights $ \ge \frac{1}{2} $, so we have this claim holding
+    \item $ w(C) \le  2 \cdot  LP$, since $ w(C) = \sum w_u x_u \le \sum w_n y_n \text{ = LP } $ and the ratio between $ x_u $ and $ y_u $ is given by $ x_u \le  2 \cdot  y_u $.
+\end{enumerate}
+
+Therefore we have $ OPT \le  2 \cdot  LP \qed $.
+
+\marginnote{
+Note that although the LP does not always have an integral optimal solution, it will always have a solution that uses 0, 1, or half.}
+
+
+\subsubsection{Set Cover}
+
+Given an input of sets $ S_1 \ldots,  S_m \subseteq [n] $ where $ \bigcup^m_{i=1} S_i = [n]  $ and weights $ w \in \mathbb{R}^m $, find set $ C \subseteq [m] $ such that
+
+\begin{itemize}
+    \item $ \bigcup_{i \in C} S_i = [n] $
+    \item $ w(C) = \sum_{i \in C} w_i $ is minimized
+\end{itemize}
+
+\marginnote{Note that vertex cover is a special case, since no element appears in a set more than once. We're looking here for a factor $ O(log(n)) $ approximation, which is the best possible assuming $P != NP$}
+
+Our approach to relaxing and rounding the problem is to use the same approach as before.
+
+Integer program:
+
+\begin{equation}
+    \begin{split}
+        \min \sum_{i=1}^m w_i x_i \\
+        \text{subject to} \\
+        \sum_{i, j \in S}^m x_i \ge 1 \text{ for all } j \in [n] \\
+        x_i \in \left\{ 0, 1 \right\} \text{ for all } i \in [m]
+    \end{split}
+\end{equation}
+
+And as usual, the LP relaxation removes the integer constraint
+
+\begin{equation}
+    \begin{split}
+        \min \sum_{i=1}^m w_i y_i \\
+        \text{subject to} \\
+        \sum_{i, j \in S}^m y_i \ge 1 \text{ for all } j \in [n] \\
+        0 \le y_i \le  1 \text{ for all } i \in [m]
+    \end{split}
+\end{equation}
+
+Summing over all the sets that contain $ j $ and adding up all of the indicator variables\sn{indicator variable $ x_i = 1 \Leftrightarrow i \in C $}
+So for every $ j $ at least one of the $ x_i $ is 1, i.e. it should be in the cover.
+
+Instead of applying the more naive approach of rounding to $ 0, 1 $ based on a threshold, we can use \textbf{randomized rounding}, where the LP solution is used as a probability for the IP solution taking on values 0 or 1.
+
+\begin{codebox}
+\li$ y $ = optimal LP solution
+\li\For $  t \gets 1 \ldots, l = ln(2n) $ \Do 
+\li    $ C_t = \emptyset $
+\li    For $ i \ldots,  m $ add $ i $ to $ C_t $ with probability $ y_i $ \End
+\li$ C = C_1 \cup \ldots, C_l $
+\end{codebox}
+
+The idea behind this is to create a bunch of mini set set covers, and then take their union
+
+We make a number of claims about the above algorithm
+
+\begin{lemma}
+$ E[w(C)] \le  l \cdot  LP $
+\end{lemma}
+
+\begin{proof}
+    Define an indicator random variable
+
+    \begin{equation}
+        z_{t, i} = \begin{cases}
+            1 & \text{ if } i \in C_t \\
+            0 & \text{ otherwise }
+        \end{cases}
+    \end{equation}
+
+    Since $ C $ is the union of all $ C_i $, the weight of $ C $ is at most the sum of weights of all $ C_i $
+
+    \begin{equation}
+        \sum^l_{t=1} E[w(C_t)] = \sum^l_{t=1} E[\sum_{i = 1}^m w_i z_{t,i}] = \sum^l_{t=1} \sum_{i = 1}^m w_i E[z_{t,i}] = \sum^l_{t=1} \sum_{i=1}^m w_i y_i = L = l \cdot  LP
+    \end{equation}
+
+    The intuition follows from realizing that the probability of an element being in the cover is $ y_i $, so the expectation of $ z_{t,i} $ is given by $ y_i $
+
+
+\end{proof}
+
+The second claim we make is:
+
+\begin{lemma}
+\begin{equation}
+    P(C \text{ $ C $ is a vertex cover }) \ge  1/2
+\end{equation}
+
+\begin{proof}
+
+
+Our goal is to show that the probability of any element being covered is at least $ \frac{1}{2n} $ and then we can take an union bound to take it to $ \frac{1}{2} $.
+The probability of an element $ j $ not being covered is the probability that each set $ C_1 \ldots, C_l$ does not cover $ j $. Since each set is picked independently we can find this probability just by taking the product.
+
+\begin{equation}
+    \forall j \in [n] \qquad P[j \notin \bigcup_{i \in C }] = \prod_{t=1}^{l} P[j \in \bigcup_{i \in c_t} S_i ]
+\end{equation}
+
+Because we add to $ C_t $ with probability $ y_i $ in an independent process, so the terms in the product are really the same thing.
+
+\begin{equation}
+    P[j \in \bigcup_{i \in c_t} S_i ] = \prod_{t=1}^l (\prod_{i: j \in S_i} (1-y_i)))
+\end{equation}
+
+The inner $ \prod $ goes all sets $ S_i $ where $ S_i $ contains $ j $ and denotes the probability that we did not pick any of the sets that contain $ j $ (since $ y_i $ is the probability that we picked a set containing $ j $).
+
+We may simplify the above expression via $ 1-x \le  e ^{-x} $ and plugging in our choice for $ l = \ln 2n $
+
+\marginnote{In practice we would want to have $ l $ be a parameter and then set the value only once we get to a point like where we are now.}
+
+\begin{equation}
+    \prod_{t=1}^l (\prod_{i: j \in S_i} (1-y_i))) \le  (e ^{- \sum_{i: j\in S_i} y_i})^l \le  e^{-l} \le  \frac{1}{2n}
+\end{equation}
+
+And the proof follows from an union bound
+
+
+
+
+\begin{equation}
+    P[\exists j : j \in \bigcup_{j \in C} S_i] \le  \sum_{j=1}^n P[j \in \bigcup_{i\in C} S_i] \le \frac{1}{2} \Rightarrow P(C \text{ $ C $ is a vertex cover }) \ge  1/2
+\end{equation}
+
+
+
+
+
+\end{proof}
+
+
+\end{lemma}
+
+
+
+\begin{blockquote}
+    One edge case we need to consider is when $ w(C) $ is small only when $ C $ is not a cover.
+    A fix for this is to repeat the algorithm until $ C $ is a set cover which gives an expected weight is $ E[w(C) | C \text{ a cover }] $. Is this still small?
+
+    We know that $ l \cdot  LP \ge  E[w(C)] $. $ E[w(C)] $ can be rewritten as $ E[w(C) | C \text{ is a cover }] P(C \text{ is a cover }) + E[w(C) | C \text{ is not a cover }] P[C \text{ is not a cover }] $. We know that the weight is always $ \ge 0 $, so we can bound the 2nd term to be $ \ge 0 $ at least.
+    This is at least $ \ge  E[w(C) | C \text{ is a cover }] \cdot  \frac{1}{2} $, so
+    \begin{equation}
+        E[w(C) | C \text{ is a cover }] \le  2 \cdot l \cdot LP \le  2 \cdot  l \cdot  OPT = O(\log n) \cdot  OPT
+    \end{equation}
+    
+
+\end{blockquote}
+
+
+
+
 
 
 
@@ -2008,6 +2082,9 @@ If $ OPT \ge 1 $ it turns out we can get a $ O(\frac{\log n}{ \log \log n }) $ a
 
 
 
+\begin{blockquote}
+    And that's it for the course!
+\end{blockquote}
 
 
 
