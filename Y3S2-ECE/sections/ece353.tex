@@ -1823,7 +1823,7 @@ MODULE_LICENSE("GPL");
 Makefile:
 
 \begin{listing}[H]
-\begin{minted}{txt}
+\begin{minted}{text}
 ifneq ($(KERNELRELEASE),)
 obj-m := proc_count.o
 else
@@ -1846,7 +1846,7 @@ endif
 
 Install module into running kernel:
 
-\texttt{sudo insmod proc_count.ko}
+\texttt{sudo insmod proc\_count.ko}
 
 To check kernel logs for this:
 
