@@ -1755,6 +1755,103 @@ A hybrid scheme may be made by combining buddy allocation with slab allocation. 
     \caption{The buddy allocator allocates a slab of objects for the slab allocator to use. Here we have allocated two blocks each for objects of size A and B. Then the slab allocator manages the slabs, minimizing internal fragmentation}
 \end{figure}
 
+\subsection{Your first kernel module}
+
+\begin{itemize}
+    \item printk is the kernel's equivalent of printf
+        \begin{itemize}
+            \item \texttt{printk(LOG\_LEVEL, "format string", args...)}
+        \end{itemize}
+\end{itemize}
+
+\begin{listing}[H]
+\begin{minted}{c}
+#include <linux/module.h>
+#include <linux/printk.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/sched.h>
+
+static struct proc_dir_entry *count_entry;
+
+static int count_show(struct seq_file *s, void *v) {
+  struct task_struct *p;
+  u64 count = 0;
+  for_each_process(p) {
+    // a macro provided by kernel to go over all processes
+    ++count;
+  }
+  seq_printf(s, "%llu\n", count);
+  return 0;
+}
+
+static int __init proc_count_init(void)
+{
+  pr_info("proc_count: init\n");
+  // create an entry called count in the procfs:
+  // creates an entry called /proc/count w/ perm 0644
+  // the last argument is a pointer to a function that will be called 
+  // when the file is read
+  // the function takes a seq_file and a void* as arguments
+  // in our case, our count_show function will be called on read
+  // which will write the number of processes to the seq_file
+  // which will be read by the user
+  count_entry = proc_create_single("count", 0644, NULL, count_show);
+  if (IS_ERR(count_entry)) {
+    return PTR_ERR(count_entry);
+  }
+  return 0;
+}
+
+static void __exit proc_count_exit(void)
+{
+  pr_info("proc_count: exit\n");
+  proc_remove(count_entry);
+}
+
+// register init and exit functions
+// can use dmesg to see the log messages on kernel load/exit
+module_init(proc_count_init);
+module_exit(proc_count_exit);
+
+MODULE_AUTHOR("Jonathan Eyolfson");
+MODULE_DESCRIPTION("Count the number of processes");
+MODULE_LICENSE("GPL");
+\end{minted}
+\end{listing}
+
+Makefile:
+
+\begin{listing}[H]
+\begin{minted}{txt}
+ifneq ($(KERNELRELEASE),)
+obj-m := proc_count.o
+else
+KDIR ?= /lib/modules/`uname -r`/build
+
+default:
+	$(MAKE) -C $(KDIR) M=$$PWD modules
+
+modules_install:
+	$(MAKE) -C $(KDIR) M=$$PWD modules_install
+
+install:
+	$(MAKE) -C $(KDIR) M=$$PWD install
+
+clean:
+	$(MAKE) -C $(KDIR) M=$$PWD clean
+endif
+\end{minted}
+\end{listing}
+
+Install module into running kernel:
+
+\texttt{sudo insmod proc_count.ko}
+
+To check kernel logs for this:
+
+\texttt{sudo dmesg -l info}
+
 
 
 \end{document}

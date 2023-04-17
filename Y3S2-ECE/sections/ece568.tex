@@ -2390,14 +2390,262 @@ Dorifel virus (late 2012). Downloaded onto many systems already infected with an
 
 
 
+\subsection{Cloud Computing}
+
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-19-48-20.png}
+    \caption{Cloud computing can provide many layers of abstraction and services, and there are security implications for each one of them. In this course we will focus on the IaaS layer.}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-19-49-54.png}
+    \caption{Users typically interact with the blue boxes here, and the yellow ones are typically abstracted away by the cloud provider.}
+\end{figure}
+
+The security industry is still defining best security practice for cloud computing and there are a lot of research on overcoming the security implications of shared cloud computing.
+Clients trust cloud service providers (CSP) to provide confidentiality, integrity, and availability, and CSPs trust clients to not behave badly. However CSPs also need to ensure malicious clients don't interfere with or exploit one another.
+
+\begin{itemize}
+    \item Confidentiality: our data now physically lives on the CSP's premises. Monitoring access patterns and VM usage patterns can leak information, and so can side channel leakage (i.e. recovering data from previously running VMs).
+    \item Integrity: what if a client's data gets changed or is compromised? Race conditions, exploiting data caching, etc can be an issue.
+    \item Availability: geolocation of data, uptime of VMs, and so forth.
+\end{itemize}
+
+Some things of consideration are
+
+\begin{itemize}
+    \item Hypervisors are low-level software components that allow hardware be virtualised and partitioned into Vms, i.e. HyperV, VMWare, Proxmox, etc.
+If hackers can get into a hypervisor then they can get root access to all VMs on that hypervisor.
+One way of securing hypervisors is TPM (Trust Platform Module) which is a secure co-processor which signs a copy of the software at boot to verify the integrity of the code that is running.
+\item Firewalls: Customer-controlled firewalls restrict traffic to/from their VMs. CSPs implement firewalls outside VMs so compromised VMs don't gain ability to modify firewall settings.
+\item Cryptography at rest. There is no agreed-upon best practice. Amazon has encrypted object storage and plaintext block storage, OpenStack encrypts and signs block storage but not objects, and Joyent does not encrypt, claiming that customers should be responsible for their own encryption since CSPs cannot be trusted with encryption. 
+\item Networking: IPs can be rotated among CSP VMs, so a customer who causes an IP to be blacklisted can cause the next customer who uses it to be adversely affected. Spoofed packages should be monitored and CSPs should block usage of their services for things like spam.
+\end{itemize}
+
+One of the concerns customers face when doing private infrastructure or public cloud is the loss of confidentiality of their data and computations. Shared caches, storage channels, and covert channels can be concerns.
+
+
+One exploit is a cache timing exploit: a side channel attack on shared hardware.
+An attacker who can run code on the same processor as a victim can use the shared cache as a timing channel to infer information about data being used in computation by the victim.
+
+
+\begin{definition}
+    \textbf{Cache timing attack}:
+
+    Prime phase: attacker fills shared cache with their data, evicting all the victim's data from the cache. The victim is then allowed to execute their code, which uses the shared cache. Loads by victim evicts attacker data from the cache.
+
+
+    Probe phase:
+    Attacker reads data from the cache and times how each read takes. The accesses that take longer are because of cache misses and go to memory, so the attacker can infer which cache lines the victim accessed. It has been experimentally shown that this leaks enough information to recover a victim's AES key.
+
+    Defenses include allocating memory such that there is no overlap in cache lines used by customers\mn{which is very inefficient}, or allocating memory such that cache lines that contain sensitive information cannot be evicted from the cache and do not affect the timing of the attacker's memory accesses.
+
+\end{definition}
+
+Covert channels can also be used: an attacker who compromises a VM can leak information out through methods such as caches (2-10 bit per second\mN{Xu et al, 2011}) or the memory bus at rates up to 100bps\mn{Wu et al, 2012}.
+
+
+A common goal of CSPs is to be able to prove with high probability that they have maintained the integrity, availability, and durability of customer data. This is often done via a probabilistic algorithm, where customers make specially constructed queries on their data data and if the queries are answered correctly by the CSP then it proves with high probability that the data security has been maintained.
+
+
+\begin{definition}
+    \textbf{Proof of retrieval} 
+
+    Customer encrypts a file and randomly embeds a number of check-blocks (sentinels). Encryption makes the sentinels indistinguishable from other file blocks.
+    Customer challenges CSP by asking for a random subset of the sentinel blocks. If the CSP has modified or deleted the file, then it will also have suppressed a number of sentinels.
+    Checksums are used to detect the possibility of small changes having been made.
+    \marginnote{Another case where this could be useful is sprinkling fake customer data into your database and if those emails end up getting activity or turn up somewhere then it means that there has probably been a data leak or some sort at some point}
+\end{definition}
+
+
+\begin{definition}
+    \textbf{Provable data possession}: the client pre-computes tags for each block of a file and then stores the file with a server. Tags are computed using homomorphic encryption, so tags computed for multiple or arbitrary file blocks can be combined into a single value. So this way the CSP can still do some cryptographic tests for you without having to know the key.
+\end{definition}
+
+
+\subsection{Computer Security learned from Physical Security}
+
+
+Locks present an interesting case study in security design for a goal that has remained unchanged for almost 4000 years: do not let the bolt move until someone presents a valid token.
+Also, recall that much of what makes security hard has to do with negative goals: i.e. thought it may be easy to make a lock that opens when Alice puts her key in, it shouldn't allow Bob (or anyone else) to open the door, or to copy a key, etc.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-20-39-07.png}
+    \caption{Prof. Courtney Gibson has a collection of historic locks going back a couple thousand years?? Like who is this person}
+\end{figure}
+
+
+Physical security differs from computer security is that upgrades are hard: whereas it is easy to upgrade software, hardware upgrades involve retooling production lines, replacing whole locks, and so forth. And consequences of exploits can be huge: property or lives.
+This lead to a culture of secrecy: manufactures and locksmiths protect their secrets which leads to lessons of past design failures not being well known, which is very different from the cybersecurity culture where disclosure is the norm.
+\marginnote{It can be hard to educate consumers about risks if the technology isn't understood.}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-20-45-45.png}
+    \caption{When we started ECE568 there was no expectation of burning our notes after we were done with it}
+\end{figure}
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-20-54-47.png}
+    \caption{There is a culture clash between digital and physical security, but IoT devices straddle the difference}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-20-56-03.png}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-20-57-18.png}
+    \caption{Keys are secure in theory, but it is not cost-effective to manufacture every part to perfect tolerances. For example, we can isolate key pins one at a time, which drastically reduces the number of combinations that need to be tried.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-20-59-09.png}
+    \caption{Picking a lock: first, place some tension on the lock}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-20-58-51.png}
+    \caption{Next, nudge the pins up one by one up into the shear line. Usually there will be just one or two that are sticking, so we can put those up to the correct height first, and so forth until the lock is unlocked.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-21-00-50.png}
+    \caption{Slightly more modern picking too which simulates a key as well as gives offsets for the notches}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-21-01-34.png}
+\end{figure}
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-21-03-07.png}
+    \caption{Medeco locks were designed to combat this issue by requiring that the pins be rotated to the correct position as well.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-21-03-41.png}
+\end{figure}
 
 
 
 
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-21-04-33.png}
+    \caption{The groove extending all the way to the end made these locks a lot more pickable}
+\end{figure}
 
 
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-21-07-04.png}
+    \caption{Some locks you can just push all the way up and unlock. Kind of like a buffer overflow.Solutions to this have been created i.e. having a canary pin of sorts which when overlifted jams the lock until the correct key is inserted. Or some other locks where if the wrong key is it shoots you.}
+\end{figure}
+
+
+Keys make for really poor passwords and are easily replayed. Attempts to resolve this include having really bizarre key blanks, patenting the key blanks, or making it illegal.
+\marginnote{Most of the US railway infrastructure is protected by only 15 keys which you can just buy online lol}
+
+What are ways to prevent non-original keys? One includes introducing parts of the key that must move in certain ways (like nonces).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-21-12-18.png}
+    \caption{Articulated keys}
+\end{figure}
+
+Some side channel attacks:
+
+\begin{itemize}
+    \item  A problem with combination locks (especially in safes) were that they tended to vibrate themselves open since their wheels were not balanced.
+    \item Impressioning: inserting an incorrect key and reading marks left on the key and filing away until we get a valid key.
+    \item Privilege Escalation: most businesses have a master key system. This is usually implemented by adding another set of breaks for the master key. 
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-21-15-26.png}
+        \end{figure}
+
+        If we start with a non-master key and procedurally edit each notch until it opens the lock again we can iterate our way to a master key.
+\end{itemize}
+
+
+Systems design is important.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-21-17-10.png}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-21-17-45.png}
+\end{figure}
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-21-18-14.png}
+    \caption{Layered security is a good idea}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-21-19-03.png}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-21-19-11.png}
+    \caption{These stamps are used to make sure that the lock could not be opened without puncturing the paper first. And these were hard to duplicate since in the 1800s people didn't have printers at home.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-21-20-21.png}
+    \caption{Modern safes have sensors that detect attacks and will lock themselves down.}
+\end{figure}
+
+The current trend is towards smart keys that perform a cryptographic handshake alongside a mechanical lock. The highest security assurance in physical locks come from designs that test the entire key (user token) as one single, atomic operation: This prevents attackers from breaking down the problem and attacking individual components\mn{Some key designs require the entire key to be literally put into the lock and then some motions to cover up the key hole (like putting a toy into a kinder surprise and then closing it)} This is equally applicable to digital systems.
+
+In summary,
+
+\begin{itemize}
+    \item Good security does not rely on the secrecy of your algorithm or implementation
+    \item Whenever possible, have the following:
+        \begin{itemize}
+            \item Multiple factors
+            \item Liveness
+            \item Layered security
+        \end{itemize}
+    \item Combine authentications into one single test (atomic operation)
+\end{itemize}
 
 
 \end{document}
