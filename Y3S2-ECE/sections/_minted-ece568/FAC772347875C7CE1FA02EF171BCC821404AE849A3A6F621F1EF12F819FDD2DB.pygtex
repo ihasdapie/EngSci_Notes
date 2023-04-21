@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{k+kt}{void}\PYG{+w}{ }\PYG{n+nf}{main}\PYG{p}{()}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{k}{const}\PYG{+w}{ }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{len}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{10}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kt}{char}\PYG{+w}{ }\PYG{n}{buf}\PYG{p}{[}\PYG{n}{len}\PYG{p}{];}
+\PYG{+w}{    }\PYG{n}{snprintf}\PYG{p}{(}\PYG{n}{buf}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{len}\PYG{p}{,}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}AB\PYGZpc{}d\PYGZpc{}d\PYGZdq{}}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{5}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{6}\PYG{p}{);}
+\PYG{+w}{    }\PYG{c+c1}{// buf is now \PYGZdq{}AB56\PYGZdq{}}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

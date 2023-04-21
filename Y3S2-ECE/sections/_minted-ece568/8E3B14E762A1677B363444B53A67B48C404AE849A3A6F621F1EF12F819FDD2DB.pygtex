@@ -1,0 +1,3 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{n}{spirntf}\PYG{p}{(}\PYG{n}{buf}\PYG{p}{,}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}Hello \PYGZpc{}s\PYGZdq{}}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{name}\PYG{p}{);}
+\end{Verbatim}

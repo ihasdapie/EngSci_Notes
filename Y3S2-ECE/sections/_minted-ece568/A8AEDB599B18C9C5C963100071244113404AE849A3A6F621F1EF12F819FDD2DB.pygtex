@@ -1,0 +1,13 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{k+kt}{char}\PYG{o}{*}\PYG{+w}{ }\PYG{n+nf}{processNext}\PYG{p}{(}\PYG{k+kt}{char}\PYG{o}{*}\PYG{+w}{ }\PYG{n}{strm}\PYG{p}{)\PYGZob{}}
+\PYG{+w}{    }\PYG{k+kt}{char}\PYG{+w}{ }\PYG{n}{buf}\PYG{p}{[}\PYG{l+m+mi}{512}\PYG{p}{];}
+\PYG{+w}{    }\PYG{k+kt}{short}\PYG{+w}{ }\PYG{n}{len}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{o}{*}\PYG{p}{(}\PYG{k+kt}{short}\PYG{o}{*}\PYG{p}{)}\PYG{n}{strm}\PYG{p}{;}\PYG{+w}{ }\PYG{c+c1}{// note that by default these are signed}
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{len}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{l+m+mi}{512}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{buf}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{strm}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{len}\PYG{p}{);}\PYG{+w}{ }\PYG{c+c1}{// note that the 3rd arg of memcpy is an unsigned int}
+\PYG{+w}{        }\PYG{n}{process}\PYG{p}{(}\PYG{n}{buf}\PYG{p}{);}
+\PYG{+w}{        }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{strm}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{n}{len}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}\PYG{+w}{ }\PYG{k}{else}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{k}{return}\PYG{+w}{ }\PYG{l+m+mi}{\PYGZhy{}1}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

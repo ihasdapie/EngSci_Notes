@@ -1,0 +1,32 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{c+c1}{\PYGZsh{} we need to trust someone at first. With public key auth. we just need to trust that the certificate authority is giving keys to the right people.}
+\PYG{c+c1}{\PYGZsh{} We can also be our own certificate authority!}
+
+\PYG{c+c1}{\PYGZsh{}  request a new x509 certificate (cakey.pem)}
+\PYG{c+c1}{\PYGZsh{} \PYGZhy{} v3\PYGZus{}ca tells it that this is a certificate authority}
+\PYG{c+c1}{\PYGZsh{} \PYGZhy{} give it a timeout and want 4096 bit key}
+openssl\PYG{+w}{ }req\PYG{+w}{ }\PYGZhy{}new\PYG{+w}{ }\PYGZhy{}x509\PYG{+w}{ }\PYGZhy{}extensions\PYG{+w}{ }v3\PYGZus{}ca\PYG{+w}{ }\PYGZhy{}keyout\PYG{+w}{ }cakey.pem\PYG{+w}{ }\PYGZhy{}out\PYG{+w}{ }cacert.pem\PYG{+w}{ }\PYGZhy{}days\PYG{+w}{ }\PYG{l+m}{3650}\PYG{+w}{ }\PYGZhy{}newkey\PYG{+w}{ }rsa:4096
+
+\PYG{c+c1}{\PYGZsh{} follow through with the prompts \PYGZam{} optionally give the PEM a passphrase.}
+\PYG{c+c1}{\PYGZsh{} can read the keys with: (note this will prompt for passphrase)}
+openssl\PYG{+w}{ }rsa\PYG{+w}{ }\PYGZhy{}in\PYG{+w}{ }cakey.pem\PYG{+w}{ }\PYGZhy{}text
+
+\PYG{c+c1}{\PYGZsh{} can read the certificate with:}
+openssl\PYG{+w}{ }x509\PYG{+w}{ }\PYGZhy{}in\PYG{+w}{ }cacert.pem\PYG{+w}{ }\PYGZhy{}text
+
+\PYG{c+c1}{\PYGZsh{} now let\PYGZsq{}s make a key pair for our web server}
+
+openssl\PYG{+w}{ }genrsa\PYG{+w}{ }\PYGZhy{}des3\PYG{+w}{ }\PYGZhy{}out\PYG{+w}{ }server.key\PYG{+w}{ }\PYG{l+m}{2048}
+
+\PYG{c+c1}{\PYGZsh{} as the server let\PYGZsq{}s request a certificate for our public key}
+\PYG{c+c1}{\PYGZsh{} from our CA; create a csr (certificate signing request)}
+openssl\PYG{+w}{ }req\PYG{+w}{ }\PYGZhy{}new\PYG{+w}{ }\PYGZhy{}key\PYG{+w}{ }server.key\PYG{+w}{ }\PYGZhy{}out\PYG{+w}{ }server.csr
+
+
+\PYG{c+c1}{\PYGZsh{} now we can sign the certificate for a year with our CA}
+\PYG{c+c1}{\PYGZsh{} serial is for keeping track of the certificates that we\PYGZsq{}ve signed}
+openssl\PYG{+w}{ }x509\PYG{+w}{ }\PYGZhy{}req\PYG{+w}{ }\PYGZhy{}days\PYG{+w}{ }\PYG{l+m}{365}\PYG{+w}{ }\PYGZhy{}in\PYG{+w}{ }server.csr\PYG{+w}{ }\PYGZhy{}CA\PYG{+w}{ }cacert.pem\PYG{+w}{ }\PYGZhy{}CAkey\PYG{+w}{ }cakey.pem\PYG{+w}{ }\PYGZhy{}CAserial\PYG{+w}{ }serial.txt\PYG{+w}{ }\PYGZhy{}CAcreateserial\PYG{+w}{ }\PYGZhy{}out\PYG{+w}{ }server.crt
+
+\PYG{c+c1}{\PYGZsh{} now we\PYGZsq{}ve created server.crt which is the certificate that we\PYGZsq{}ll give to the client to prove that the server is who it says it is, at least according to the CA}
+
+\end{Verbatim}

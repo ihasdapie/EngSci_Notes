@@ -1,0 +1,3 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{p}{\PYGZlt{}}\PYG{n+nt}{img} \PYG{n+na}{src}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}http://bank.com/transfer?amount=1000\PYGZam{}to=attacker\PYGZdq{}}
+\end{Verbatim}

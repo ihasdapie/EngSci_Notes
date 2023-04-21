@@ -1,0 +1,4 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{k}{select}\PYG{+w}{ }\PYG{n}{id}\PYG{p}{,}\PYG{+w}{ }\PYG{k}{first}\PYG{p}{,}\PYG{+w}{ }\PYG{k}{last}\PYG{+w}{ }\PYG{k}{from}\PYG{+w}{ }\PYG{n}{users}\PYG{+w}{ }\PYG{k}{where}\PYG{+w}{ }\PYG{n}{id}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s+s1}{\PYGZsq{}1\PYGZsq{}}\PYG{+w}{ }\PYG{k}{union}\PYG{+w}{ }\PYG{k}{select}\PYG{+w}{ }\PYG{n}{load\PYGZus{}file}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}/etc/passwd\PYGZsq{}}\PYG{p}{),}\PYG{+w}{ }\PYG{l+s+s1}{\PYGZsq{}foo\PYGZsq{}}\PYG{+w}{ }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}\PYGZsq{}}
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} And whatever we want in foo..}
+\end{Verbatim}

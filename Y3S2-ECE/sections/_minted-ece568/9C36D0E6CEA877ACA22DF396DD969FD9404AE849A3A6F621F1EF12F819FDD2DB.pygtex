@@ -1,0 +1,10 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{k+kt}{void}\PYG{+w}{ }\PYG{n+nf}{main}\PYG{+w}{ }\PYG{p}{()}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{k+kt}{char}\PYG{+w}{ }\PYG{n}{buf}\PYG{p}{[}\PYG{l+m+mi}{256}\PYG{p}{];}
+\PYG{+w}{    }\PYG{n}{snprintf}\PYG{p}{(}\PYG{n}{buf}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{256}\PYG{p}{,}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}AB,\PYGZpc{}08x,\PYGZpc{}08x,\PYGZpc{}08x,\PYGZpc{}08x,\PYGZpc{}08x,\PYGZpc{}08x,\PYGZpc{}08x,\PYGZpc{}08x,\PYGZpc{}08x,\PYGZpc{}08x\PYGZdq{}}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{5}\PYG{p}{);}
+\PYG{+w}{    }\PYG{n}{printf}\PYG{p}{(}\PYG{n}{buf}\PYG{p}{);}
+\PYG{+w}{    }\PYG{c+c1}{// AB,00000005,00000000,29ee6890,302c4241,2c353030,30303030,39383665,}
+\PYG{+w}{    }\PYG{c+c1}{// 32346332,33353363,30333033}
+\PYG{+w}{    }\PYG{c+c1}{// if we look at the 3rd clause as ascii we get \PYGZsq{}0,BA\PYGZsq{} (recall intel little endian) i.e. we\PYGZsq{}ve read up far enough to see the local variable specifying the format string pushed onto the stack earlier}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

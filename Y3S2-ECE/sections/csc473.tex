@@ -1429,7 +1429,12 @@ A {j-face} is a face where the rank of the sub-matrix $ A_f $ of $ A $ for that 
 
 \end{theorem}
 
-Recall that some vertex $ v \in P $ is an optimal solution to the LP, i.e. $ c^Tx$  is minimized or maximized.
+
+\begin{theorem}
+    Vertices $ v \in P $ are optimal solutions to the LP, i.e. $ c^Tx$  is minimized or maximized.
+\end{theorem}
+
+
 
 
 
@@ -1765,7 +1770,7 @@ where $ P $ is the augmenting path we get a new matching $ M' $ that is one edge
 
 An algorithm for finding a maximum matching is to start with an empty matching and repeatedly find an augmenting path and add it to the matching. 
 We know that it will terminate by the theorem above, and specifically, it will terminate after $ O(\mu) $ augmentations, where $ \mu $ is the size of the maximum matching. \marginnote{We know $ \mu \le  \frac{n}{2}$ given a bipartite graph}
-This sounds great, but how can we find an augmenting path? Construct directed graph $ D $ where $ D $ has a vertex for each exposed vertex in $ M $ and an edge from $ A \to B $ if it does not belong to $ M $ and $ B \to A $ otherwise.
+This sounds great, but how can we find an augmenting path? Construct directed graph $ D $ which is a copy of $ G $ but with edges directed such that there is a path from $ A \to B $ if it does not belong to $ M $ and $ B \to A $ otherwise.
 There exists an augmenting path in $ G $ with respect to $ M $ $ \iff $ there exists a directed path in $ D $ between exposed vertices in $ A $ and $ B $. DFS can be used on this graph to give an $ O(m) $ algorithm to finding an augmenting path in $ G $, leading to an $ O(nm) $ algorithm for maximum cardinality matching which can be cut down to $ O(m \sqrt{n})$ by augmenting among several paths at the same time.
 
 When the algorithm terminates, $ C* = (A-L) \cup (B \cap L) $ is a vertex cover, and $ |C*| = |M*|$

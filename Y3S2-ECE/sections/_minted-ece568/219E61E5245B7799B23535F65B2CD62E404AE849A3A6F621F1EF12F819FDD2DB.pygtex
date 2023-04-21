@@ -1,0 +1,10 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{n}{p}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{malloc}\PYG{p}{(}\PYG{l+m+mi}{128}\PYG{p}{);}
+\PYG{n}{q}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{malloc}\PYG{p}{(}\PYG{l+m+mi}{128}\PYG{p}{);}
+\PYG{n}{free}\PYG{p}{(}\PYG{n}{p}\PYG{p}{);}
+\PYG{n}{free}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{q}\PYG{p}{);}
+\PYG{n}{p}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{malloc}\PYG{p}{(}\PYG{l+m+mi}{256}\PYG{p}{);}
+\PYG{c+c1}{// this is where the attack happens; the fake tag, shell code, etc}
+\PYG{n}{strcpy}\PYG{p}{(}\PYG{n}{p}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{attacker\PYGZus{}string}\PYG{p}{);}
+\PYG{n}{free}\PYG{p}{(}\PYG{n}{q}\PYG{p}{);}
+\end{Verbatim}

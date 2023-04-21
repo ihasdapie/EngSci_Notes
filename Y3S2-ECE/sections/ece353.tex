@@ -1460,6 +1460,62 @@ See the \texttt{banksim.c} example
 
 
 
+\subsection{Disks (SSDs)}
+
+SSDs are basically a big block of transistors (flash memory) that persist bits. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-17-19-42-52.png}
+    \caption{SSD devices are partitioned into block, plane, and pages.}
+\end{figure}
+
+\begin{blockquote}
+    Typical page sizes for SSDs are about 4KiB, reading a page is 10 $ \mu s $, writing a page is 100 $ \mu s $, and erasing a block is about $ 1ms $
+\end{blockquote}
+
+
+Most commercial SSDs are build off of flash memory\mn{Though there are some that use DRAM and more recently 3D X-Point (Optane)}, we may only 1) read complete pages and 2) write to freshly erased pages. For standard commercial SSD implementations erasing is done per-block, so an entire block must be erased before writing to it. This means that writing can be slow since we may need to create a new block.
+Various optimizations can be done at an OS level to help optimize SSDs, mainly via garbage collection: moving live pages to new blocks so that the increasingly sparse old blocks can be erased. At the SSD-device level the disk controller has no idea which blocks are still alive, so the OS must step in with the TRIM command to inform the SSD of unused blocks.
+
+
+\subsubsection{RAID}
+Multi-disk schemes distribute data on multiple disks to prevent data loss and increase throughput.
+
+
+\begin{itemize}
+    \item RAID 0 (striped volume): data is `striped' across all disks in the array, resulting in a $ N $-fold speedup with the number of disks with the drawback of introducing the possibility of data loss across all the disks on disk failure.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.8\linewidth]{img/image_2023-04-17-19-55-57.png}
+        \end{figure}
+    \item On the other extreme, RAID 1 mirrors all data across all disks. Though it offers good reliability and performance, it incurs an extremely high cost for redundancy.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.8\linewidth]{img/image_2023-04-17-19-56-04.png}
+        \end{figure}
+    \item A middle ground is RAID 4, which uses a dedicated parity disk which stores the XOR of the other copies. This means that the RAID array can still satisfy reads even if one drive fails.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.8\linewidth]{img/image_2023-04-17-19-57-04.png}
+        \end{figure}
+
+        RAID 4 requires at least 3 drives and allows for us to make use of $ 1-\frac{1}{N}  $ of available space. Read performance is improved on the order of $ N-1 $ (ignoring parity) but there is additional complexity on write
+    \item  RAID 5 is an improved RAID 4 by distributing parity blocks across all disks, easing the write bottleneck on a single drive.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.8\linewidth]{img/image_2023-04-17-20-01-28.png}
+            \caption{Note $ _p $ parity blocks are distributed across all disks. Parity blocks are for a particular stripe (and are embedded in the stripe), so no parity block corresponds to other data blocks in the same disk}
+        \end{figure}
+
+    \item RAID 6 includes an extra parity block per stripe to recover from 2 drive failures. However disk utilization drops to $ 1-\frac{2}{N} $ of the total disk space and write performance suffers compared to RAID5 due to more parity calculations.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.8\linewidth]{img/image_2023-04-17-20-03-32.png}
+        \end{figure}
+
+\end{itemize}
+
 
 
 
@@ -1583,11 +1639,11 @@ Use follows a server-client model, where the server sets up sockets via the \tex
 Sockets can usually be of two \texttt{type}-s: stream (TCP) and datagram (UDP). TCP is reliable and handshakes and ordered, while UDP is unreliable and unordered.
 
 \begin{itemize}
+
     \item \texttt{bind} sets socket to an address. Different \texttt{sockaddr} structures are available for different protocols
         \begin{figure}[H]
             \centering
             \includegraphics[width=0.8\linewidth]{img/image_2023-03-22-01-01-37.png}
-            \label{fig:}
         \end{figure}
     \item \texttt{int listen (int socket, int backlog)} system call sets queue limits for incoming connections
 
@@ -1754,6 +1810,70 @@ A hybrid scheme may be made by combining buddy allocation with slab allocation. 
     \includegraphics[width=0.8\linewidth]{img/image_2023-04-03-15-32-17.png}
     \caption{The buddy allocator allocates a slab of objects for the slab allocator to use. Here we have allocated two blocks each for objects of size A and B. Then the slab allocator manages the slabs, minimizing internal fragmentation}
 \end{figure}
+\subsection{Virtual Machines}
+
+Virtual machines fulfill the goal of running multiple operating systems on a single machine while allowing each OS to believe they are the only ones running.
+There are two levels of hypervisors: type 1 (bare metal) and type 2 (hosted). Type 1 hypervisors run directly on the hardware, while type 2 hypervisors run on top of an existing OS.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-21-38-36.png}
+\end{figure}
+
+Note that virtual machines are not emulation, whereas emulation translates one ISA to another (x64 <-> ARM), our gues operation system executes instructions directly using the same ISA.
+Some use cases allow for emulation, e.g. Wine or NEW emulators. A VM could use emulation to run a VM for a different ISA but it would be slow.
+VMs also must enable pause and play; like how we can pause and play threads and swap context there, a hypervisor must switch contexts between entire virtual machines.
+The hypervisor must also isolate guests from each other and the host while setting limits on resource use.
+Further optimizations on resource use can also be achieved via hypervisors: since data centers also involve many servers running at once (often not making use of all of their resources), instead of having multiple lightly used physical systems we could multiplex many of them onto a single machine.
+The key abstraction is the vCPU, which is a virtual CPU that can be scheduled by the hypervisor.
+\marginnote{Whereas processes had the PCB act as a virtual CPU, it didn't contain enough information to virtualise the entire CPU (just enough for user-mode processes)}.
+Permissions wise the guest OS runs in the usual modes (kernel ring 0, user ring 3), and the hypervisor in ring -1 to control the guest. Type 2 hypervisors must create a virtual kernel and user mode.
+
+
+\subsubsection{Type 2 hypervisors}
+One strategy for implementing a type 2 hypervisor is trap and emulate: all instructions run normally and privileged ones generate a trap (wrong mode), which the hypervisor must then handle by emulate/situating the operation and resuming control to the guest. This slows down otherwise native execution.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/image_2023-04-16-21-44-31.png}
+\end{figure}
+
+Unfortunately trap and emulate does not always work: some instruction sets are not clear between privileged and non-privileged instructions (these instructions are \textit{untrappable}) \mn{x86 is guilty of this, e.g. \texttt{popf} instruction which loads the flags register from the stack and behaves differently for kernel and user modes. Additional reading: chroot, docker, bsd jails, solaris zones.}.
+Untrappable instructions require another approach: binary translation.
+Instead of depending on the processor to detect the privileged instructions and trap to the hypervisor/host to handle, binary translation inspects the instruction stream on-the-fly in software and rewrites untrappable instructions with the appropriate operations.
+
+
+\marginnote{Ring -1 (hypervisor mode) was introduced in 2005/2006 by intel/amd and defines a mode where a host kernel can manage isolation for guests and hardware virtualisation}
+
+\subsubsection{Virtualised Scheduling}
+We must map vCPUs to physical CPUs\mn{Like how we can map threads (i.e. virtual processes) to processes}.
+
+Approaches include
+\begin{itemize}
+    \item CPU assignment: 1:1 mapping of vCPUs to pCPUs
+    \item Overcommitting: assigning more vCPUs than pCPUs. This can have issues e.g. the guest OS running too unpredictably for soft real-time tasks.
+\end{itemize}
+
+More complexities present themselves with memory management, since we want the guest kernel to be able to think that it is managing the entire physical address space -- so we have to virtualize that too. The problem gets worse if memory is overcommitted, too.
+This is usually solved via nested page tables, where the guest kernel has its own page tables that map to the physical memory, and the hypervisor has its own page tables that map to the guest page tables.
+Overcommitted memory can be implemented via double-paging where the hypervisor does its own page replacement, but this may be undesirable since the guest most likely knows its own memory access patterns better.
+Optimizations can be made by having the guests share duplicate pages\mn{Duplicate detection via hashing is one method} and using CoW.
+
+
+Likewise, the hypervisor must virtualize the I/O devices\mn{Which may or may not physically exist}, which can be done via device emulation or pass-through. 
+For some I/O implementations the hypervisor must perform some translation between the guest and host, e.g. for network devices the hypervisor must translate between the guest's network stack and the host's network stack. 
+Hardware solutions e.g. IOMMU can be used to help with this by providing a virtual address space exclusively for the guest to use, giving the VM exclusive control over the device and enabling native speed operation of devices e.g. GPUs in VMs.
+Likewise, disks are virtualized (usually via disk images and mounting and stuff) to give each VM the impression that it has a whole disk.
+
+
+Uses for VMs include isolating applications from each other, running multiple operating systems on the same machine, and running multiple instances of the same OS (e.g. for testing).
+Containers are kind of like VMs but usually share the host kernel and are more lightweight.
+
+
+
+
+
+
 
 \subsection{Your first kernel module}
 
