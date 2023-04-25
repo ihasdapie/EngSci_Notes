@@ -8,4 +8,5 @@
 *.out
 */_minted-notes/*
 *.pdf
+*.dvi
 .DS_Store
