@@ -160,12 +160,12 @@ One technique for finding the RA would be to incrementally increase the size of 
 \subsection{Format string Vulnerabilities}
 \begin{listing}[H]
 \begin{minted}{c}
-spirntf(buf, "Hello %s", name);
+sprintf(buf, "Hello %s", name);
 \end{minted}
 \end{listing}
 
 
-\texttt{sprint} is similar to \texttt{printf} except the output is copied into \texttt{buf}. The vulnerability is simiar to the buffer overflow vulnerability. The difference is that the attacker can control the format string.
+\texttt{sprintf} is similar to \texttt{printf} except the output is copied into \texttt{buf}. The vulnerability is similar to the buffer overflow vulnerability. The difference is that the attacker can control the format string.
 
 Consider the following:
 
@@ -1043,7 +1043,7 @@ Stream ciphers are generally simple and fast. Block ciphers are more common just
     \caption{DES Feistel Ntwork}
 \end{figure}
 \begin{itemize}
-    \item Input is split between left and right haves. Some computation involving a portion of the key is done on the right half and then the left and right halves are swapped, then the output gets piped back into this process. This "round" is repeated 16 times.
+    \item Input is split between left and right halves. Some computation involving a portion of the key is done on the right half and then the left and right halves are swapped, then the output gets piped back into this process. This "round" is repeated 16 times.
     \item 56 bit key is put through a schedule to create sixteen subkeys. 56-bit into 2 28 bit halves, then shifted left by 1 or 2 bites, and 2 24 bits are then selected from the halves to make a 48 but subkey $ K_n $. Exact number of bit selections are carefully selected.
 \end{itemize}
 
@@ -1156,7 +1156,7 @@ This procedure is susceptible to a third party attacker who may capture the sess
 
 
 \begin{definition}
-    Needham-Schronecker protocol: a protocol for key exchange between two parties $ A $ and $ B $ that is secure against a passive eavesdropper by using a \textbf{nonce} 
+    Needham-Schroeder protocol: a protocol for key exchange between two parties $ A $ and $ B $ that is secure against a passive eavesdropper by using a \textbf{nonce} 
 
     \begin{figure}[H]
         \centering
